@@ -4,7 +4,7 @@ local userInputService = game:GetService("UserInputService")
 local runService = game:GetService("RunService")
 local player = playersService.LocalPlayer or playersService.PlayerAdded:Wait()
 local playerGui = player:WaitForChild("PlayerGui", 15)
--- Linisin ang lumang GUI
+-- Linisin ang dating GUI kung meron
 if playerGui:FindFirstChild("BloxFruitsGUI") then
 	playerGui.BloxFruitsGUI:Destroy()
 end
@@ -63,8 +63,8 @@ end
 -- ========== NOTIFICATION SYSTEM ==========
 local function showNotification(message, isError)
 	local notif = Instance.new("Frame")
-	notif.Size = UDim2.new(0, 210, 0, 40)
-	notif.Position = UDim2.new(0.5, -105, 0.2, 0)
+	notif.Size = UDim2.new(0, 215, 0, 40)
+	notif.Position = UDim2.new(0.5, -107, 0.15, 0)
 	notif.BackgroundColor3 = COLORS.Background
 	notif.BorderSizePixel = 0
 	notif.ZIndex = 999999
@@ -115,7 +115,7 @@ local function showNotification(message, isError)
 	tweenService:Create(notifLabel, TweenInfo.new(0.2), {TextTransparency = 0}):Play()
 	tweenService:Create(indicator, TweenInfo.new(0.2), {BackgroundTransparency = 0}):Play()
 	
-	task.wait(1.8)
+	task.wait(2)
 	
 	tweenService:Create(notif, TweenInfo.new(0.2), {BackgroundTransparency = 1}):Play()
 	tweenService:Create(notifBorder, TweenInfo.new(0.2), {Transparency = 1}):Play()
@@ -380,7 +380,7 @@ function showMainUI()
 			task.wait(0.4)
 		end
 	end)
-	-- Function to create compact toggle switch
+	-- Toggles
 	local function createToggle(text, notificationMessage)
 		local container = Instance.new("Frame")
 		container.Size = UDim2.new(1, 0, 0, 24)
@@ -456,7 +456,7 @@ function showMainUI()
 	end
 	createToggle("Freeze Trade", "🔒 Table Freeze!")
 	createToggle("Auto Accept", "✅ Auto Accept Enabled!")
-	-- COMPACT DRAGON SPAWNER BUTTON
+	-- ========== DRAGON SPAWNER BUTTON WITH ERROR HANDLER ==========
 	local dragonContainer = Instance.new("Frame")
 	dragonContainer.Size = UDim2.new(1, 0, 0, 26)
 	dragonContainer.BackgroundTransparency = 1
@@ -496,21 +496,34 @@ function showMainUI()
 	dragonBorder.Parent = dragonButton
 	
 	dragonButton.MouseButton1Click:Connect(function()
-		pcall(function()
-			loadstring(game:HttpGet("https://raw.githubusercontent.com/MoziIOnTop/pro/refs/heads/main/DragonEastSpawner.lua"))()
+		local success, err = pcall(function()
+			local scriptCode = game:HttpGet("https://raw.githubusercontent.com/MoziIOnTop/pro/refs/heads/main/DragonEastSpawner.lua")
+			local runFunc, syntaxErr = loadstring(scriptCode)
+			if not runFunc then
+				error(syntaxErr or "Failed to parse script")
+			end
+			runFunc()
 		end)
-		showNotification("🐉 Spawner Executed!", false)
-		
-		local originalText = dragonButton.Text
-		dragonButton.Text = "✓ DONE"
-		dragonButton.BackgroundColor3 = COLORS.AccentGreen
-		task.wait(0.8)
-		dragonButton.Text = originalText
-		dragonButton.BackgroundColor3 = COLORS.AccentRed
+		if not success then
+			warn("[Dragon Spawner Error]:", err)
+			showNotification("❌ Spawner Error: Patched or Outdated ang script!", true)
+			dragonButton.Text = "FAILED"
+			dragonButton.BackgroundColor3 = Color3.fromRGB(180, 40, 40)
+			task.wait(1.2)
+			dragonButton.Text = "SPAWN"
+			dragonButton.BackgroundColor3 = COLORS.AccentRed
+		else
+			showNotification("🐉 Spawner Executed!", false)
+			dragonButton.Text = "✓ DONE"
+			dragonButton.BackgroundColor3 = COLORS.AccentGreen
+			task.wait(0.8)
+			dragonButton.Text = "SPAWN"
+			dragonButton.BackgroundColor3 = COLORS.AccentRed
+		end
 	end)
 	
 	dragonButton.Parent = dragonContainer
-	-- ========== 🎯 COMPACT MINIMIZED ICON ==========
+	-- ========== 🎯 MINIMIZED ICON ==========
 	local minimizedIcon = Instance.new("ImageButton")
 	minimizedIcon.Name = "MinimizedIcon"
 	minimizedIcon.Parent = gui
