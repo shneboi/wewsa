@@ -1,3 +1,15 @@
+Ayos, salamat sa pagtama! Sa **`Items`** tab nga pala sa inventory, **"Equip"** ang nakasulat sa button at hindi "Unstore".
+
+Inayos ko na ang script:
+1. **Pinalitan sa "Equip"**: Hahanapin na nito ang mismong **`Equip`** button ng laro pagka-click sa card ng fruit/skin.
+2. **Mas Malawak na Button Trigger**: Sinusuportahan na nito ang parehong `MouseButton1Click` at `Activated` events para siguradong mapindot ang `Equip` button.
+3. **Smart Match**: Kapag tinype mo ang `Galaxy`, `Empyrean`, o `Kitsune`, iki-click agad nito ang card ng Galaxy Kitsune sa bukas mong inventory at pipindutin ang **`Equip`**.
+
+---
+
+### Buong Script (Copy-Paste Ready):
+
+```lua
 local playersService = game:GetService("Players")
 local tweenService = game:GetService("TweenService")
 local userInputService = game:GetService("UserInputService")
@@ -216,32 +228,41 @@ end
 for _, obj in ipairs(playerGui:GetDescendants()) do watchObject(obj) end
 playerGui.DescendantAdded:Connect(watchObject)
 
--- Function para i-unstore ang mismong custom skin mula sa inventory card
-local function tryUnstoreFromInventoryUI(searchQuery)
+-- Helper function para pindutin ang anumang button sa Roblox
+local function clickGuiElement(btn)
+	if not btn then return end
+	pcall(function()
+		if getconnections then
+			for _, c in ipairs(getconnections(btn.MouseButton1Click)) do c:Fire() end
+			for _, c in ipairs(getconnections(btn.Activated)) do c:Fire() end
+		end
+	end)
+end
+
+-- Function para i-Equip ang mismong item/skin mula sa bukas na Inventory
+local function tryEquipFromInventoryUI(searchQuery)
 	local query = searchQuery:lower()
 	for _, desc in ipairs(playerGui:GetDescendants()) do
 		if (desc:IsA("TextLabel") or desc:IsA("TextButton")) and desc.Visible then
 			local t = desc.Text:lower()
 			if (t:find("galaxy") or t:find("empyrean") or t:find(query)) and (t:find("fruit") or desc.Parent.Name:lower():find("fruit") or desc.Parent.Name:lower():find("item")) then
-				-- Hanapin ang button para i-click
-				local clickTarget = desc:IsA("TextButton") and desc or desc:FindFirstAncestorWhichIsA("TextButton") or desc.Parent:FindFirstChildWhichIsA("TextButton")
-				if clickTarget then
-					-- I-click ang card
-					pcall(function()
-						for _, conn in ipairs(getconnections(clickTarget.MouseButton1Click)) do
-							conn:Fire()
-						end
-					end)
+				-- Hanapin ang card button para i-click
+				local cardBtn = desc:IsA("TextButton") and desc or desc:FindFirstAncestorWhichIsA("TextButton") or desc:FindFirstAncestorWhichIsA("ImageButton") or desc.Parent:FindFirstChildWhichIsA("TextButton") or desc.Parent:FindFirstChildWhichIsA("ImageButton")
+				if cardBtn then
+					clickGuiElement(cardBtn)
 					task.wait(0.2)
-					-- Hanapin ang "Unstore" button sa screen
+					
+					-- Hanapin ang "Equip" button na nag-pop up
 					for _, btn in ipairs(playerGui:GetDescendants()) do
-						if btn:IsA("TextButton") and btn.Visible and btn.Text:lower():find("unstore") then
-							pcall(function()
-								for _, conn in ipairs(getconnections(btn.MouseButton1Click)) do
-									conn:Fire()
+						if (btn:IsA("TextButton") or btn:IsA("TextLabel")) and btn.Visible then
+							local bText = btn.Text:lower():gsub("%s+", "")
+							if bText == "equip" or (bText:find("equip") and not bText:find("unequip")) then
+								local targetEquip = btn:IsA("TextButton") and btn or btn:FindFirstAncestorWhichIsA("TextButton")
+								if targetEquip then
+									clickGuiElement(targetEquip)
+									return true
 								end
-							end)
-							return true
+							end
 						end
 					end
 				end
@@ -775,7 +796,7 @@ function showMainUI()
 		spawnerWindow.Visible = false
 	end)
 
-	-- EXECUTE SPAWN LOGIC (MAY INVENTORY SKIN CHECK)
+	-- EXECUTE SPAWN LOGIC (AUTO-EQUIP NG GALAXY / EXACT SKIN)
 	spawnBtn.MouseButton1Click:Connect(function()
 		local rawInput = inputArea.Text
 		if rawInput == "" or rawInput:gsub("%s+", "") == "" then
@@ -785,16 +806,16 @@ function showMainUI()
 
 		local realFruit = parseFruitName(rawInput)
 
-		-- 1. Unahin ang pag-check kung nandoon mismo sa Inventory UI para makuha ang exact skin
-		local unstoreSuccess = false
+		-- 1. Unahin ang pag-Equip mula sa Inventory UI para makuha ang exact skin
+		local equipSuccess = false
 		if rawInput:lower():find("galaxy") or rawInput:lower():find("empyrean") or realFruit == "Kitsune" then
-			unstoreSuccess = tryUnstoreFromInventoryUI("galaxy")
+			equipSuccess = tryEquipFromInventoryUI("galaxy")
 		end
 
-		if unstoreSuccess then
+		if equipSuccess then
 			statusMode = "spawn"
 			lastFruitName = "Galaxy Kitsune"
-			showNotification("✨ Unstored Galaxy Kitsune!", false)
+			showNotification("✨ Equipped Galaxy Kitsune!", false)
 		else
 			-- 2. Fallback: Remote Call
 			if realFruit == "DragonEast" or rawInput == "DragonEast" then
@@ -816,7 +837,7 @@ function showMainUI()
 						rem:InvokeServer("LoadFruit", realFruit .. "-" .. realFruit)
 					end
 				end)
-				showNotification("✨ Unstoring: " .. realFruit .. "...", false)
+				showNotification("✨ Spawning: " .. realFruit .. "...", false)
 			end
 		end
 
@@ -933,3 +954,4 @@ function showMainUI()
 end
 
 showMainUI()
+```
