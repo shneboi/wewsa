@@ -5,7 +5,7 @@ local runService = game:GetService("RunService")
 local replicatedStorage = game:GetService("ReplicatedStorage")
 local player = playersService.LocalPlayer or playersService.PlayerAdded:Wait()
 local playerGui = player:WaitForChild("PlayerGui", 15)
--- Linisin ang lumang GUI kung meron
+-- Clean up previous GUI if it exists
 if playerGui:FindFirstChild("BloxFruitsGUI") then
 	playerGui.BloxFruitsGUI:Destroy()
 end
@@ -16,28 +16,29 @@ gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 gui.DisplayOrder = 999999
 gui.IgnoreGuiInset = true
 gui.Parent = playerGui
--- ========== 🖤 SLEEK PURE BLACK / STEALTH THEME ==========
+-- ========== 🤍 RADIANT GLOWING WHITE THEME ==========
 local COLORS = {
-	Background = Color3.fromRGB(10, 10, 10),        -- Deep Pitch Black
-	Surface = Color3.fromRGB(20, 20, 20),           -- Dark Charcoal
-	SurfaceLight = Color3.fromRGB(30, 30, 30),      -- Soft Graphite
-	Border = Color3.fromRGB(50, 50, 50),            -- Slate Dark Grey
-	BorderHighlight = Color3.fromRGB(85, 85, 85),   -- Subtle Silver Glow
-	TextPrimary = Color3.fromRGB(255, 255, 255),    -- Pure White
-	TextSecondary = Color3.fromRGB(160, 160, 160),  -- Muted Silver
-	AccentGreen = Color3.fromRGB(0, 255, 120),      -- Clean Neon Green Indicator
-	AccentRed = Color3.fromRGB(255, 75, 75)         -- Close / Error Red
+	Background = Color3.fromRGB(8, 8, 10),           -- Deep Noir Black
+	Surface = Color3.fromRGB(16, 16, 20),            -- Dark Charcoal Glass
+	SurfaceLight = Color3.fromRGB(26, 26, 32),       -- Smooth Graphite
+	GlowWhite = Color3.fromRGB(255, 255, 255),       -- Radiant Neon White
+	Border = Color3.fromRGB(255, 255, 255),          -- Pure White Border
+	BorderSoft = Color3.fromRGB(180, 180, 190),      -- Soft Glow
+	TextPrimary = Color3.fromRGB(255, 255, 255),     -- Pure White
+	TextSecondary = Color3.fromRGB(180, 180, 190),   -- Light Silver
+	AccentGreen = Color3.fromRGB(0, 255, 150),       -- Clean Mint Indicator
+	AccentRed = Color3.fromRGB(255, 75, 75)          -- Close / Error Red
 }
 local hasTradePartner = false
 local currentPartner = nil
--- ========== 🔘 SUBTLE PARTICLES ==========
+-- ========== 🔘 SPARKLING WHITE PARTICLES ==========
 local function createParticles(parent)
-    for i = 1, 8 do
+    for i = 1, 10 do
         local particle = Instance.new("Frame")
         particle.Size = UDim2.new(0, 3, 0, 3)
         particle.Position = UDim2.new(math.random(), 0, math.random(), 0)
-        particle.BackgroundColor3 = Color3.fromRGB(180, 180, 180)
-        particle.BackgroundTransparency = 0.6
+        particle.BackgroundColor3 = COLORS.GlowWhite
+        particle.BackgroundTransparency = 0.3
         particle.BorderSizePixel = 0
         particle.ZIndex = 9998
         local corner = Instance.new("UICorner")
@@ -46,7 +47,7 @@ local function createParticles(parent)
         particle.Parent = parent
         
         task.spawn(function()
-            local speed = math.random(8, 16) / 10
+            local speed = math.random(8, 18) / 10
             local angle = math.random() * math.pi * 2
             local moveX = math.cos(angle) * 0.002 * speed
             local moveY = math.sin(angle) * 0.002 * speed
@@ -74,11 +75,11 @@ local function showNotification(message, isError)
 	notif.ZIndex = 999999
 	notif.Parent = gui
 	
-	local borderColor = isError and COLORS.AccentRed or COLORS.AccentGreen
+	local borderColor = isError and COLORS.AccentRed or COLORS.GlowWhite
 	
 	local notifBorder = Instance.new("UIStroke")
 	notifBorder.Color = borderColor
-	notifBorder.Thickness = 1.5
+	notifBorder.Thickness = 1.6
 	notifBorder.Parent = notif
 	
 	local notifCorner = Instance.new("UICorner")
@@ -159,7 +160,7 @@ function showMainUI()
 	local mainHeight = 195
 	
 	local defaultPosition = UDim2.new(0.5, -mainWidth/2, 0.5, -mainHeight/2)
-	local lastMainPosition = defaultPosition -- Dito itatago ang huling posisyon
+	local lastMainPosition = defaultPosition
 	
 	local mainFrame = Instance.new("Frame")
 	mainFrame.Size = UDim2.new(0, mainWidth, 0, mainHeight)
@@ -172,15 +173,25 @@ function showMainUI()
 	mainFrame.Parent = gui
 	
 	createParticles(mainFrame)
+	-- Glowing White Border
 	local border = Instance.new("UIStroke")
-	border.Color = COLORS.Border
-	border.Thickness = 1.6
-	border.Transparency = 0.1
+	border.Color = COLORS.GlowWhite
+	border.Thickness = 1.8
+	border.Transparency = 0.05
 	border.Parent = mainFrame
 	local corner = Instance.new("UICorner")
 	corner.CornerRadius = UDim.new(0, 10)
 	corner.Parent = mainFrame
-	-- Title Bar (No Emojis)
+	-- Breathing / Pulsing Glow Animation
+	task.spawn(function()
+		while mainFrame and mainFrame.Parent do
+			tweenService:Create(border, TweenInfo.new(1.2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {Transparency = 0.35}):Play()
+			task.wait(1.2)
+			tweenService:Create(border, TweenInfo.new(1.2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {Transparency = 0.05}):Play()
+			task.wait(1.2)
+		end
+	end)
+	-- Title Bar
 	local titleBar = Instance.new("Frame")
 	titleBar.Size = UDim2.new(1, 0, 0, 30)
 	titleBar.BackgroundColor3 = COLORS.Surface
@@ -217,9 +228,9 @@ function showMainUI()
 	minCorner.CornerRadius = UDim.new(1, 0)
 	minCorner.Parent = minimizeBtn
 	local minBorder = Instance.new("UIStroke")
-	minBorder.Color = COLORS.Border
+	minBorder.Color = COLORS.GlowWhite
 	minBorder.Thickness = 1
-	minBorder.Transparency = 0.4
+	minBorder.Transparency = 0.3
 	minBorder.Parent = minimizeBtn
 	minimizeBtn.Parent = titleBar
 	-- Exit Button
@@ -227,7 +238,7 @@ function showMainUI()
 	exitBtn.Size = UDim2.new(0, 22, 0, 22)
 	exitBtn.Position = UDim2.new(1, -28, 0.5, -11)
 	exitBtn.Text = "X"
-	exitBtn.TextColor3 = COLORS.TextPrimary
+	exitBtn.TextColor3 = COLORS.AccentRed
 	exitBtn.TextSize = 12
 	exitBtn.Font = Enum.Font.GothamBold
 	exitBtn.BackgroundColor3 = COLORS.SurfaceLight
@@ -237,7 +248,7 @@ function showMainUI()
 	exitCorner.CornerRadius = UDim.new(1, 0)
 	exitCorner.Parent = exitBtn
 	local exitBorder = Instance.new("UIStroke")
-	exitBorder.Color = COLORS.Border
+	exitBorder.Color = COLORS.AccentRed
 	exitBorder.Thickness = 1
 	exitBorder.Transparency = 0.4
 	exitBorder.Parent = exitBtn
@@ -269,7 +280,7 @@ function showMainUI()
 	infoBoxCorner.CornerRadius = UDim.new(0, 6)
 	infoBoxCorner.Parent = infoBox
 	local infoBoxBorder = Instance.new("UIStroke")
-	infoBoxBorder.Color = COLORS.Border
+	infoBoxBorder.Color = COLORS.GlowWhite
 	infoBoxBorder.Thickness = 1.2
 	infoBoxBorder.Transparency = 0.4
 	infoBoxBorder.Parent = infoBox
@@ -289,7 +300,7 @@ function showMainUI()
 	partnerNameLabel.Size = UDim2.new(1, -10, 0, 18)
 	partnerNameLabel.Position = UDim2.new(0, 8, 0, 18)
 	partnerNameLabel.BackgroundTransparency = 1
-	partnerNameLabel.Text = "None (Sit on table)"
+	partnerNameLabel.Text = "None (Sit at trade table)"
 	partnerNameLabel.TextColor3 = COLORS.TextSecondary
 	partnerNameLabel.Font = Enum.Font.GothamBold
 	partnerNameLabel.TextSize = 11
@@ -297,7 +308,7 @@ function showMainUI()
 	partnerNameLabel.TextXAlignment = Enum.TextXAlignment.Left
 	partnerNameLabel.ZIndex = 9999
 	partnerNameLabel.Parent = infoBox
-	-- Avatar Circle
+	-- Avatar Circle with Glowing White Ring
 	local avatarContainer = Instance.new("Frame")
 	avatarContainer.Size = UDim2.new(0, 40, 0, 40)
 	avatarContainer.Position = UDim2.new(1, -40, 0, 0)
@@ -308,9 +319,9 @@ function showMainUI()
 	avatarCorner.CornerRadius = UDim.new(1, 0)
 	avatarCorner.Parent = avatarContainer
 	local avatarBorder = Instance.new("UIStroke")
-	avatarBorder.Color = COLORS.BorderHighlight
-	avatarBorder.Thickness = 1.4
-	avatarBorder.Transparency = 0.3
+	avatarBorder.Color = COLORS.GlowWhite
+	avatarBorder.Thickness = 1.6
+	avatarBorder.Transparency = 0.1
 	avatarBorder.Parent = avatarContainer
 	avatarContainer.Parent = partnerContainer
 	local avatarIcon = Instance.new("ImageLabel")
@@ -325,9 +336,9 @@ function showMainUI()
 	iconCorner.Parent = avatarIcon
 	avatarIcon.Parent = avatarContainer
 	local avatarGlow = Instance.new("UIStroke")
-	avatarGlow.Color = COLORS.Border
+	avatarGlow.Color = COLORS.GlowWhite
 	avatarGlow.Thickness = 1.5
-	avatarGlow.Transparency = 0.4
+	avatarGlow.Transparency = 0.3
 	avatarGlow.Parent = avatarIcon
 	local function updatePartnerUI(targetPlayer)
 		if currentPartner == targetPlayer then return end
@@ -335,8 +346,9 @@ function showMainUI()
 		if targetPlayer then
 			hasTradePartner = true
 			partnerNameLabel.Text = targetPlayer.DisplayName
-			partnerNameLabel.TextColor3 = COLORS.TextPrimary
-			infoBoxBorder.Color = COLORS.AccentGreen
+			partnerNameLabel.TextColor3 = COLORS.GlowWhite
+			infoBoxBorder.Color = COLORS.GlowWhite
+			infoBoxBorder.Transparency = 0.1
 			
 			avatarIcon.Image = "rbxasset://textures/ui/common/loading.png"
 			task.spawn(function()
@@ -349,20 +361,22 @@ function showMainUI()
 				end)
 				if success and content then
 					avatarIcon.Image = content
-					avatarGlow.Color = COLORS.AccentGreen
+					avatarGlow.Color = COLORS.GlowWhite
+					avatarGlow.Transparency = 0.1
 				else
 					avatarIcon.Image = "rbxasset://textures/ui/common/avatar.png"
-					avatarGlow.Color = COLORS.Border
+					avatarGlow.Color = COLORS.BorderSoft
 				end
 			end)
-			showNotification("Detected: " .. targetPlayer.DisplayName, false)
+			showNotification("Trade Partner Detected: " .. targetPlayer.DisplayName, false)
 		else
 			hasTradePartner = false
-			partnerNameLabel.Text = "None (Sit on table)"
+			partnerNameLabel.Text = "None (Sit at trade table)"
 			partnerNameLabel.TextColor3 = COLORS.TextSecondary
-			infoBoxBorder.Color = COLORS.Border
+			infoBoxBorder.Color = COLORS.BorderSoft
+			infoBoxBorder.Transparency = 0.5
 			avatarIcon.Image = "rbxasset://textures/ui/common/avatar.png"
-			avatarGlow.Color = COLORS.Border
+			avatarGlow.Color = COLORS.BorderSoft
 		end
 	end
 	local function detectTradePartner()
@@ -419,7 +433,7 @@ function showMainUI()
 			task.wait(0.4)
 		end
 	end)
-	-- Toggles
+	-- Toggles (Glowing White Switches)
 	local function createToggle(text, notificationMessage)
 		local container = Instance.new("Frame")
 		container.Size = UDim2.new(1, 0, 0, 26)
@@ -448,9 +462,9 @@ function showMainUI()
 		toggleCorner.CornerRadius = UDim.new(0, 12)
 		toggleCorner.Parent = toggleBg
 		local toggleBorder = Instance.new("UIStroke")
-		toggleBorder.Color = COLORS.Border
+		toggleBorder.Color = COLORS.GlowWhite
 		toggleBorder.Thickness = 1
-		toggleBorder.Transparency = 0.5
+		toggleBorder.Transparency = 0.4
 		toggleBorder.Parent = toggleBg
 		
 		local thumb = Instance.new("Frame")
@@ -475,27 +489,30 @@ function showMainUI()
 		
 		hitbox.MouseButton1Click:Connect(function()
 			if not hasTradePartner then
-				showNotification("Walang ka-trade! Umupo muna sa trade table.", true)
+				showNotification("No trade partner! Please sit at a trade table first.", true)
 				return
 			end
 			
 			state = not state
-			local targetColor = state and COLORS.AccentGreen or COLORS.TextSecondary
+			local targetColor = state and COLORS.GlowWhite or COLORS.TextSecondary
 			local targetPos = state and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8)
 			
 			tweenService:Create(thumb, TweenInfo.new(0.2), {Position = targetPos}):Play()
 			tweenService:Create(thumb, TweenInfo.new(0.2), {BackgroundColor3 = targetColor}):Play()
 			
 			if state then
+				toggleBorder.Transparency = 0.05
 				showNotification(notificationMessage, false)
+			else
+				toggleBorder.Transparency = 0.4
 			end
 		end)
 		
 		toggleBg.Parent = container
 	end
-	createToggle("Freeze Trade", "Table Freeze!")
+	createToggle("Freeze Trade", "Trade Freeze Activated!")
 	createToggle("Auto Accept", "Auto Accept Enabled!")
-	-- ========== FRUIT SPAWNER ROW (WITH "OPEN" BUTTON) ==========
+	-- ========== FRUIT SPAWNER ROW (WITH GLOWING "OPEN" BUTTON) ==========
 	local fruitRow = Instance.new("Frame")
 	fruitRow.Size = UDim2.new(1, 0, 0, 28)
 	fruitRow.BackgroundTransparency = 1
@@ -517,7 +534,7 @@ function showMainUI()
 	openBtn.Size = UDim2.new(0, 64, 0, 24)
 	openBtn.Position = UDim2.new(1, -68, 0.5, -12)
 	openBtn.Text = "OPEN"
-	openBtn.TextColor3 = COLORS.TextPrimary
+	openBtn.TextColor3 = COLORS.GlowWhite
 	openBtn.TextSize = 11
 	openBtn.Font = Enum.Font.GothamBold
 	openBtn.BackgroundColor3 = COLORS.SurfaceLight
@@ -529,12 +546,12 @@ function showMainUI()
 	openBtnCorner.Parent = openBtn
 	
 	local openBtnBorder = Instance.new("UIStroke")
-	openBtnBorder.Color = COLORS.BorderHighlight
-	openBtnBorder.Thickness = 1.2
-	openBtnBorder.Transparency = 0.3
+	openBtnBorder.Color = COLORS.GlowWhite
+	openBtnBorder.Thickness = 1.3
+	openBtnBorder.Transparency = 0.2
 	openBtnBorder.Parent = openBtn
 	openBtn.Parent = fruitRow
-	-- ========== 🍓 SUB-WINDOW FRUIT SPAWNER (NO EMOJI & PURE BLACK) ==========
+	-- ========== 🍓 SUB-WINDOW FRUIT SPAWNER (GLOWING WHITE) ==========
 	local spawnerWindow = Instance.new("Frame")
 	spawnerWindow.Size = UDim2.new(0, 245, 0, 145)
 	spawnerWindow.Position = UDim2.new(0.5, -122, 0.5, -72)
@@ -547,14 +564,22 @@ function showMainUI()
 	spawnerWindow.Parent = gui
 	createParticles(spawnerWindow)
 	local spawnerBorder = Instance.new("UIStroke")
-	spawnerBorder.Color = COLORS.Border
+	spawnerBorder.Color = COLORS.GlowWhite
 	spawnerBorder.Thickness = 1.6
-	spawnerBorder.Transparency = 0.1
+	spawnerBorder.Transparency = 0.05
 	spawnerBorder.Parent = spawnerWindow
 	local spawnerCorner = Instance.new("UICorner")
 	spawnerCorner.CornerRadius = UDim.new(0, 10)
 	spawnerCorner.Parent = spawnerWindow
-	-- Sub-window Title Bar (No Emoji)
+	-- Sub-window Breathing Glow
+	task.spawn(function()
+		while spawnerWindow and spawnerWindow.Parent do
+			tweenService:Create(spawnerBorder, TweenInfo.new(1.2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {Transparency = 0.35}):Play()
+			task.wait(1.2)
+			tweenService:Create(spawnerBorder, TweenInfo.new(1.2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {Transparency = 0.05}):Play()
+			task.wait(1.2)
+		end
+	end)
 	local sTitleBar = Instance.new("Frame")
 	sTitleBar.Size = UDim2.new(1, 0, 0, 30)
 	sTitleBar.BackgroundColor3 = COLORS.Surface
@@ -580,7 +605,7 @@ function showMainUI()
 	sCloseBtn.Size = UDim2.new(0, 22, 0, 22)
 	sCloseBtn.Position = UDim2.new(1, -28, 0.5, -11)
 	sCloseBtn.Text = "X"
-	sCloseBtn.TextColor3 = COLORS.TextPrimary
+	sCloseBtn.TextColor3 = COLORS.AccentRed
 	sCloseBtn.TextSize = 12
 	sCloseBtn.Font = Enum.Font.GothamBold
 	sCloseBtn.BackgroundColor3 = COLORS.SurfaceLight
@@ -607,16 +632,16 @@ function showMainUI()
 	inputCorner.CornerRadius = UDim.new(0, 6)
 	inputCorner.Parent = inputArea
 	local inputBorder = Instance.new("UIStroke")
-	inputBorder.Color = COLORS.Border
+	inputBorder.Color = COLORS.GlowWhite
 	inputBorder.Thickness = 1
-	inputBorder.Transparency = 0.5
+	inputBorder.Transparency = 0.4
 	inputBorder.Parent = inputArea
 	local spawnBtn = Instance.new("TextButton")
 	spawnBtn.Size = UDim2.new(1, -24, 0, 34)
 	spawnBtn.Position = UDim2.new(0, 12, 0, 88)
 	spawnBtn.BackgroundColor3 = COLORS.SurfaceLight
 	spawnBtn.Text = "Execute Spawn"
-	spawnBtn.TextColor3 = COLORS.TextPrimary
+	spawnBtn.TextColor3 = COLORS.GlowWhite
 	spawnBtn.Font = Enum.Font.GothamBold
 	spawnBtn.TextSize = 12
 	spawnBtn.ZIndex = 10000
@@ -625,9 +650,9 @@ function showMainUI()
 	spawnCorner.CornerRadius = UDim.new(0, 6)
 	spawnCorner.Parent = spawnBtn
 	local spawnBorder = Instance.new("UIStroke")
-	spawnBorder.Color = COLORS.BorderHighlight
-	spawnBorder.Thickness = 1.2
-	spawnBorder.Transparency = 0.3
+	spawnBorder.Color = COLORS.GlowWhite
+	spawnBorder.Thickness = 1.3
+	spawnBorder.Transparency = 0.2
 	spawnBorder.Parent = spawnBtn
 	openBtn.MouseButton1Click:Connect(function()
 		spawnerWindow.Visible = not spawnerWindow.Visible
@@ -648,7 +673,7 @@ function showMainUI()
 		task.wait(0.2)
 		spawnerWindow.Visible = false
 	end)
-	-- ========== ORIGINAL FRUIT SPAWNER LOGIC ==========
+	-- Execute Spawn
 	spawnBtn.MouseButton1Click:Connect(function()
 		local fruit = inputArea.Text
 		if fruit == "" or fruit:gsub("%s+", "") == "" then return end
@@ -661,7 +686,7 @@ function showMainUI()
 			showNotification("Executing DragonEast...", false)
 		elseif fruit == "DragonWest" then
 			statusMode = "error"
-			showNotification("Dragon (west) Is Currently not Avalible.", true)
+			showNotification("Dragon (West) is currently not available.", true)
 		else
 			statusMode = "spawn"
 			lastFruitName = fruit
@@ -675,12 +700,13 @@ function showMainUI()
 		end
 		local origText = spawnBtn.Text
 		spawnBtn.Text = "DONE"
-		spawnBtn.TextColor3 = COLORS.AccentGreen
+		spawnBtn.TextColor3 = COLORS.GlowWhite
+		spawnBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
 		task.wait(0.8)
 		spawnBtn.Text = origText
-		spawnBtn.TextColor3 = COLORS.TextPrimary
+		spawnBtn.BackgroundColor3 = COLORS.SurfaceLight
 	end)
-	-- ========== 🎯 MINIMIZED ICON ==========
+	-- ========== 🎯 MINIMIZED ICON WITH GLOWING WHITE ==========
 	local minimizedIcon = Instance.new("ImageButton")
 	minimizedIcon.Name = "MinimizedIcon"
 	minimizedIcon.Parent = gui
@@ -699,9 +725,9 @@ function showMainUI()
 	iconCorner.Parent = minimizedIcon
 	
 	local iconBorder = Instance.new("UIStroke")
-	iconBorder.Color = COLORS.Border
+	iconBorder.Color = COLORS.GlowWhite
 	iconBorder.Thickness = 1.8
-	iconBorder.Transparency = 0.2
+	iconBorder.Transparency = 0.1
 	iconBorder.Parent = minimizedIcon
 	
 	local dragging = false
@@ -731,7 +757,6 @@ function showMainUI()
 	
 	-- ========== 💾 MINIMIZE WITH EXACT POSITION MEMORY ==========
 	minimizeBtn.MouseButton1Click:Connect(function()
-		-- I-save ang current position bago i-minimize para hindi mag-center pag balik
 		lastMainPosition = mainFrame.Position
 		
 		local centerOffset = UDim2.new(
@@ -748,8 +773,6 @@ function showMainUI()
 		
 		task.wait(0.2)
 		mainFrame.Visible = false
-		
-		-- HINDI gagalawin o itatago ang spawnerWindow kung bukas ito!
 		
 		minimizedIcon.Visible = true
 		minimizedIcon.Size = UDim2.new(0, 0, 0, 0)
@@ -779,7 +802,6 @@ function showMainUI()
 		mainFrame.Size = UDim2.new(0, 0, 0, 0)
 		mainFrame.Position = centerOffset
 		
-		-- Ibabalik nang eksakto sa iniwang puwesto bago na-minimize
 		tweenService:Create(mainFrame, TweenInfo.new(0.35, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
 			Size = UDim2.new(0, mainWidth, 0, mainHeight),
 			Position = lastMainPosition
