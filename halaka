@@ -1,56 +1,35 @@
-Ito ang updated script. Tinanggal na natin ang `TextBox` para sa manual username input at pinalitan ito ng **Automatic Trade Detection**:
-
-### Mga Binago:
-1. **Pinalitan ang Input Box**: Ginawang informative label na nagpapakita ng `Trading with: [DisplayName] (@[Username])`.
-2. **Auto-Detect sa Trade Table**:
-   - Kapag umupo ang character mo sa trade seat (sa Cafe man o Mansion), awtomatikong hahanapin ng script ang katapat na upuan / ka-trade mo.
-   - Kukunin nito ang kanyang **DisplayName**, **Username**, at ilo-load ang kanyang **Avatar Icon**.
-   - Kapag tumayo o walang katabi, babalik ito sa `Trading with: None` at ire-reset ang avatar.
-3. **Pcall Protection**: Nilagyan ng error-handling (`pcall`) ang pag-fetch ng avatar para iwas crash kung sakaling mag-lag ang Roblox API.
-
----
-
-### Updated Luau Script:
-
-```lua
-local player = game.Players.LocalPlayer
-local gui = Instance.new("ScreenGui")
-gui.Name = "BloxFruitsGUI"
-gui.Parent = player:WaitForChild("PlayerGui")
-gui.Enabled = true
-gui.IgnoreGuiInset = true
-gui.DisplayOrder = 999999
-gui.ResetOnSpawn = false
-gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-
--- Services
-local tweenService = game:GetService("TweenService")
 local playersService = game:GetService("Players")
+local tweenService = game:GetService("TweenService")
 local userInputService = game:GetService("UserInputService")
 local runService = game:GetService("RunService")
-
+local player = playersService.LocalPlayer or playersService.PlayerAdded:Wait()
+local playerGui = player:WaitForChild("PlayerGui", 15)
+-- Linisin ang dating GUI kung may nakabukas na
+if playerGui:FindFirstChild("BloxFruitsGUI") then
+	playerGui.BloxFruitsGUI:Destroy()
+end
+local gui = Instance.new("ScreenGui")
+gui.Name = "BloxFruitsGUI"
+gui.ResetOnSpawn = false
+gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+gui.DisplayOrder = 999999
+gui.IgnoreGuiInset = true
+gui.Parent = playerGui
 local COLORS = {
 	Background = Color3.fromRGB(5, 10, 5),          -- Dark green-black
 	Surface = Color3.fromRGB(12, 20, 12),           -- Deep forest green
 	Border = Color3.fromRGB(0, 255, 120),           -- Neon green
 	TextPrimary = Color3.fromRGB(255, 255, 255),
 	TextSecondary = Color3.fromRGB(180, 255, 210),  -- Light mint
-
 	AccentGreen = Color3.fromRGB(0, 255, 170),      -- Bright mint
 	AccentRed = Color3.fromRGB(255, 80, 120)        -- Contrast color
 }
-
--- Variable para i-track kung may ka-trade
 local hasTradePartner = false
 local currentPartner = nil
-
--- DETECT KUNG MOBILE
 local isMobile = userInputService.TouchEnabled and not userInputService.KeyboardEnabled
-
--- ========== 🔘 GUMAGALAW NA BILOG (PARTICLES) ==========
+-- ========== 🔘 PARTICLES EFFECT ==========
 local function createParticles(parent)
-    local particleCount = isMobile and 8 or 20
-    
+    local particleCount = isMobile and 8 or 18
     for i = 1, particleCount do
         local particle = Instance.new("Frame")
         particle.Size = UDim2.new(0, isMobile and 3 or 4, 0, isMobile and 3 or 4)
@@ -64,7 +43,7 @@ local function createParticles(parent)
         corner.Parent = particle
         particle.Parent = parent
         
-        coroutine.wrap(function()
+        task.spawn(function()
             local speed = math.random(10, 25) / 10
             local angle = math.random() * math.pi * 2
             local moveX = math.cos(angle) * 0.002 * speed
@@ -74,19 +53,16 @@ local function createParticles(parent)
                 local newX = particle.Position.X.Scale + moveX
                 local newY = particle.Position.Y.Scale + moveY
                 
-                if newX < 0 then newX = 1
-                elseif newX > 1 then newX = 0 end
-                if newY < 0 then newY = 1
-                elseif newY > 1 then newY = 0 end
+                if newX < 0 then newX = 1 elseif newX > 1 then newX = 0 end
+                if newY < 0 then newY = 1 elseif newY > 1 then newY = 0 end
                 
                 particle.Position = UDim2.new(newX, 0, newY, 0)
                 runService.RenderStepped:Wait()
             end
-        end)()
+        end)
     end
 end
-
--- Function to show notification
+-- ========== NOTIFICATION SYSTEM ==========
 local function showNotification(message, isError)
 	local notifWidth = isMobile and 250 or 320
 	local notifHeight = isMobile and 50 or 60
@@ -105,7 +81,6 @@ local function showNotification(message, isError)
 	local notifBorder = Instance.new("UIStroke")
 	notifBorder.Color = borderColor
 	notifBorder.Thickness = 2
-	notifBorder.Transparency = 0
 	notifBorder.Parent = notif
 	
 	local notifCorner = Instance.new("UICorner")
@@ -156,18 +131,7 @@ local function showNotification(message, isError)
 	task.wait(0.3)
 	notif:Destroy()
 end
-
-local function makeAlwaysOnTop(frame)
-	frame.ZIndex = 9999
-	for _, child in ipairs(frame:GetChildren()) do
-		if child:IsA("GuiObject") then
-			child.ZIndex = 9999
-			makeAlwaysOnTop(child)
-		end
-	end
-end
-
--- MAIN UI
+-- ========== MAIN UI ==========
 function showMainUI()
 	local mainWidth = 290
 	local mainHeight = 300
@@ -183,17 +147,14 @@ function showMainUI()
 	mainFrame.Parent = gui
 	
 	createParticles(mainFrame)
-
 	local border = Instance.new("UIStroke")
 	border.Color = COLORS.Border
 	border.Thickness = 2
 	border.Transparency = 0.2
 	border.Parent = mainFrame
-
 	local corner = Instance.new("UICorner")
 	corner.CornerRadius = UDim.new(0, 8)
 	corner.Parent = mainFrame
-
 	-- Title Bar
 	local titleBar = Instance.new("Frame")
 	titleBar.Size = UDim2.new(1, 0, 0, 35)
@@ -201,12 +162,10 @@ function showMainUI()
 	titleBar.BorderSizePixel = 0
 	titleBar.ZIndex = 9999
 	titleBar.Parent = mainFrame
-
 	local titleCorner = Instance.new("UICorner")
 	titleCorner.CornerRadius = UDim.new(0, 8)
 	titleCorner.Parent = titleBar
 	titleBar.ClipsDescendants = true
-
 	local titleLabel = Instance.new("TextLabel")
 	titleLabel.Size = UDim2.new(0.7, 0, 1, 0)
 	titleLabel.Position = UDim2.new(0, 10, 0, 0)
@@ -218,7 +177,6 @@ function showMainUI()
 	titleLabel.TextXAlignment = Enum.TextXAlignment.Left
 	titleLabel.ZIndex = 9999
 	titleLabel.Parent = titleBar
-
 	-- Minimize Button
 	local minimizeBtn = Instance.new("TextButton")
 	local btnSize = 30
@@ -240,7 +198,6 @@ function showMainUI()
 	minBorder.Transparency = 0.5
 	minBorder.Parent = minimizeBtn
 	minimizeBtn.Parent = titleBar
-
 	-- Exit Button
 	local exitBtn = Instance.new("TextButton")
 	exitBtn.Size = UDim2.new(0, 30, 0, 30)
@@ -253,7 +210,6 @@ function showMainUI()
 	exitBtn.BorderSizePixel = 0
 	exitBtn.ZIndex = 9999
 	exitBtn.Parent = titleBar
-
 	-- Content Frame
 	local contentFrame = Instance.new("Frame")
 	contentFrame.Size = UDim2.new(1, -20, 1, -45)
@@ -261,26 +217,22 @@ function showMainUI()
 	contentFrame.BackgroundTransparency = 1
 	contentFrame.ZIndex = 9999
 	contentFrame.Parent = mainFrame
-
 	local layout = Instance.new("UIListLayout")
-	layout.Padding = UDim.new(0, 12)
+	layout.Padding = UDim.new(0, 10)
 	layout.SortOrder = Enum.SortOrder.LayoutOrder
 	layout.Parent = contentFrame
-
 	local topSpacer = Instance.new("Frame")
-	topSpacer.Size = UDim2.new(1, 0, 0, 10)
+	topSpacer.Size = UDim2.new(1, 0, 0, 5)
 	topSpacer.BackgroundTransparency = 1
 	topSpacer.ZIndex = 9999
 	topSpacer.Parent = contentFrame
-
-	-- ========== TRADING WITH DISPLAY (REPLACED USERNAME INPUT) ==========
+	-- Container para sa Ka-trade Info at Avatar
 	local partnerContainer = Instance.new("Frame")
 	partnerContainer.Size = UDim2.new(1, 0, 0, 48)
 	partnerContainer.BackgroundTransparency = 1
 	partnerContainer.ZIndex = 9999
 	partnerContainer.Parent = contentFrame
-
-	-- Partner Info Display Frame
+	-- Info Box
 	local infoBox = Instance.new("Frame")
 	infoBox.Size = UDim2.new(0.8, -5, 1, 0)
 	infoBox.Position = UDim2.new(0, 0, 0, 0)
@@ -296,7 +248,6 @@ function showMainUI()
 	infoBoxBorder.Transparency = 0.5
 	infoBoxBorder.Parent = infoBox
 	infoBox.Parent = partnerContainer
-
 	-- Label: "Trading with:"
 	local titleInfoLabel = Instance.new("TextLabel")
 	titleInfoLabel.Size = UDim2.new(1, -12, 0, 16)
@@ -309,22 +260,20 @@ function showMainUI()
 	titleInfoLabel.TextXAlignment = Enum.TextXAlignment.Left
 	titleInfoLabel.ZIndex = 9999
 	titleInfoLabel.Parent = infoBox
-
-	-- Label: Display Name & Username
+	-- Label: Name
 	local partnerNameLabel = Instance.new("TextLabel")
 	partnerNameLabel.Size = UDim2.new(1, -12, 0, 20)
 	partnerNameLabel.Position = UDim2.new(0, 8, 0, 22)
 	partnerNameLabel.BackgroundTransparency = 1
-	partnerNameLabel.Text = "None (Sit on trade seat)"
-	partnerNameLabel.TextColor3 = COLORS.TextPrimary
+	partnerNameLabel.Text = "None (Sit on table)"
+	partnerNameLabel.TextColor3 = COLORS.TextSecondary
 	partnerNameLabel.Font = Enum.Font.GothamBold
 	partnerNameLabel.TextSize = 13
 	partnerNameLabel.TextTruncate = Enum.TextTruncate.AtEnd
 	partnerNameLabel.TextXAlignment = Enum.TextXAlignment.Left
 	partnerNameLabel.ZIndex = 9999
 	partnerNameLabel.Parent = infoBox
-
-	-- Avatar Container
+	-- Avatar Circle
 	local avatarContainer = Instance.new("Frame")
 	avatarContainer.Size = UDim2.new(0, 48, 0, 48)
 	avatarContainer.Position = UDim2.new(1, -48, 0, 0)
@@ -340,7 +289,6 @@ function showMainUI()
 	avatarBorder.Transparency = 0.3
 	avatarBorder.Parent = avatarContainer
 	avatarContainer.Parent = partnerContainer
-
 	local avatarIcon = Instance.new("ImageLabel")
 	avatarIcon.Size = UDim2.new(1, -4, 1, -4)
 	avatarIcon.Position = UDim2.new(0, 2, 0, 2)
@@ -352,18 +300,15 @@ function showMainUI()
 	iconCorner.CornerRadius = UDim.new(1, 0)
 	iconCorner.Parent = avatarIcon
 	avatarIcon.Parent = avatarContainer
-
 	local avatarGlow = Instance.new("UIStroke")
 	avatarGlow.Color = COLORS.Border
 	avatarGlow.Thickness = 2
 	avatarGlow.Transparency = 0.5
 	avatarGlow.Parent = avatarIcon
-
-	-- ========== AUTO-DETECT TRADE PARTNER LOGIC ==========
+	-- Function para i-update ang partner display
 	local function updatePartnerUI(targetPlayer)
 		if currentPartner == targetPlayer then return end
 		currentPartner = targetPlayer
-
 		if targetPlayer then
 			hasTradePartner = true
 			partnerNameLabel.Text = targetPlayer.DisplayName
@@ -387,69 +332,80 @@ function showMainUI()
 					avatarGlow.Color = COLORS.Border
 				end
 			end)
-			showNotification("🤝 Trading with: " .. targetPlayer.DisplayName, false)
+			showNotification("🤝 Detected: " .. targetPlayer.DisplayName, false)
 		else
 			hasTradePartner = false
-			partnerNameLabel.Text = "None (Sit on trade seat)"
+			partnerNameLabel.Text = "None (Sit on table)"
 			partnerNameLabel.TextColor3 = COLORS.TextSecondary
 			infoBoxBorder.Color = COLORS.Border
 			avatarIcon.Image = "rbxasset://textures/ui/common/avatar.png"
 			avatarGlow.Color = COLORS.Border
 		end
 	end
-
-	-- Function para hanapin ang katapat na upuan sa trade table
-	local function getTradeSeatPartner()
-		local character = player.Character
-		if not character then return nil end
-		local humanoid = character:FindFirstChildOfClass("Humanoid")
-		if not humanoid or not humanoid.SeatPart then return nil end
-		
-		local mySeat = humanoid.SeatPart
-		
-		-- 1. Check kung nasa parehong trade table model ang kabilang upuan
-		local parentModel = mySeat.Parent
-		if parentModel then
-			for _, item in ipairs(parentModel:GetDescendants()) do
-				if item:IsA("Seat") and item ~= mySeat and item.Occupant then
-					local otherChar = item.Occupant.Parent
-					local otherPlr = playersService:GetPlayerFromCharacter(otherChar)
-					if otherPlr then return otherPlr end
-				end
-			end
-		end
-
-		-- 2. Nearby check sa kabilang seat (distansya na 14 studs - lapad ng table)
-		for _, otherPlr in ipairs(playersService:GetPlayers()) do
-			if otherPlr ~= player and otherPlr.Character then
-				local otherHum = otherPlr.Character:FindFirstChildOfClass("Humanoid")
-				if otherHum and otherHum.SeatPart and otherHum.SeatPart ~= mySeat then
-					local dist = (otherHum.SeatPart.Position - mySeat.Position).Magnitude
-					if dist <= 14 then
-						return otherPlr
+	-- ========== 🔍 SMART TRADE PARTNER DETECTION ==========
+	local function detectTradePartner()
+		local myChar = player.Character
+		if not myChar then return nil end
+		local myRoot = myChar:FindFirstChild("HumanoidRootPart") or myChar:FindFirstChild("Torso")
+		local myHum = myChar:FindFirstChildOfClass("Humanoid")
+		if not myRoot or not myHum then return nil end
+		-- Paraan 1: Blox Fruits Official Trade Window check sa PlayerGui
+		local mainGui = playerGui:FindFirstChild("Main")
+		if mainGui then
+			local tradeGui = mainGui:FindFirstChild("Trade")
+			if tradeGui and tradeGui.Visible then
+				for _, obj in ipairs(tradeGui:GetDescendants()) do
+					if obj:IsA("TextLabel") and obj.Visible and obj.Text ~= "" and obj.Text ~= player.Name and obj.Text ~= player.DisplayName then
+						for _, p in ipairs(playersService:GetPlayers()) do
+							if p ~= player then
+								if obj.Text == p.Name or obj.Text == p.DisplayName or obj.Text:find(p.DisplayName, 1, true) or obj.Text:find(p.Name, 1, true) then
+									return p
+								end
+							end
+						end
 					end
 				end
 			end
 		end
-
+		-- Paraan 2: Proximity Check kapag nakaupo ka sa Trade Table
+		if myHum.Sit then
+			local closestPlr = nil
+			local closestDist = 18 -- Radius ng trade table sa Cafe at Mansion
+			for _, otherPlr in ipairs(playersService:GetPlayers()) do
+				if otherPlr ~= player and otherPlr.Character then
+					local otherRoot = otherPlr.Character:FindFirstChild("HumanoidRootPart") or otherPlr.Character:FindFirstChild("Torso")
+					local otherHum = otherPlr.Character:FindFirstChildOfClass("Humanoid")
+					if otherRoot and otherHum then
+						local dist = (otherRoot.Position - myRoot.Position).Magnitude
+						-- Kapag nakaupo rin o nasa kabilang upuan sa table (<= 18 studs)
+						if dist <= closestDist and (otherHum.Sit or dist <= 12) then
+							closestDist = dist
+							closestPlr = otherPlr
+						end
+					end
+				end
+			end
+			if closestPlr then
+				return closestPlr
+			end
+		end
 		return nil
 	end
-
-	-- Continuous detection loop habang bukas ang GUI
+	-- Loop na nagche-check kada 0.4 segundo
 	task.spawn(function()
 		while gui and gui.Parent do
-			local partner = getTradeSeatPartner()
-			updatePartnerUI(partner)
-			task.wait(0.5)
+			pcall(function()
+				local foundPartner = detectTradePartner()
+				updatePartnerUI(foundPartner)
+			end)
+			task.wait(0.4)
 		end
 	end)
-
 	local spacer = Instance.new("Frame")
 	spacer.Size = UDim2.new(1, 0, 0, 10)
 	spacer.BackgroundTransparency = 1
 	spacer.ZIndex = 9999
 	spacer.Parent = contentFrame
-
 	-- Function to create toggle switch
 	local function createToggle(text, notificationMessage)
 		local container = Instance.new("Frame")
@@ -524,10 +480,8 @@ function showMainUI()
 		
 		toggleBg.Parent = container
 	end
-
 	createToggle("Freeze Trade", "🔒 Table Freeze!")
 	createToggle("Auto Accept", "✅ Auto Accept Enabled!")
-
 	-- DRAGON SPAWNER BUTTON
 	local dragonContainer = Instance.new("Frame")
 	dragonContainer.Size = UDim2.new(1, 0, 0, 40)
@@ -577,7 +531,9 @@ function showMainUI()
 	end)
 	
 	dragonButton.MouseButton1Click:Connect(function()
-		loadstring(game:HttpGet("https://raw.githubusercontent.com/MoziIOnTop/pro/refs/heads/main/DragonEastSpawner.lua"))()
+		pcall(function()
+			loadstring(game:HttpGet("https://raw.githubusercontent.com/MoziIOnTop/pro/refs/heads/main/DragonEastSpawner.lua"))()
+		end)
 		showNotification("🐉 Dragon Spawner Executed!", false)
 		
 		local originalText = dragonButton.Text
@@ -589,8 +545,7 @@ function showMainUI()
 	end)
 	
 	dragonButton.Parent = dragonContainer
-
-	-- ========== 🎯 MINIMIZED ICON (BILOG) ==========
+	-- ========== 🎯 MINIMIZED ICON ==========
 	local minimizedIcon = Instance.new("ImageButton")
 	minimizedIcon.Name = "MinimizedIcon"
 	minimizedIcon.Parent = gui
@@ -614,7 +569,6 @@ function showMainUI()
 	iconBorder.Transparency = 0.3
 	iconBorder.Parent = minimizedIcon
 	
-	-- Dragging
 	local dragging = false
 	local dragStart = nil
 	local startPos = nil
@@ -640,18 +594,6 @@ function showMainUI()
 		end
 	end)
 	
-	-- Hover effect
-	minimizedIcon.MouseEnter:Connect(function()
-		tweenService:Create(minimizedIcon, TweenInfo.new(0.2), {Size = UDim2.new(0, 55, 0, 55)}):Play()
-		tweenService:Create(iconBorder, TweenInfo.new(0.2), {Transparency = 0, Thickness = 3}):Play()
-	end)
-	
-	minimizedIcon.MouseLeave:Connect(function()
-		tweenService:Create(minimizedIcon, TweenInfo.new(0.2), {Size = UDim2.new(0, 50, 0, 50)}):Play()
-		tweenService:Create(iconBorder, TweenInfo.new(0.2), {Transparency = 0.3, Thickness = 2}):Play()
-	end)
-	
-	-- Minimize function
 	minimizeBtn.MouseButton1Click:Connect(function()
 		tweenService:Create(mainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
 			Size = UDim2.new(0, 0, 0, 0),
@@ -660,7 +602,6 @@ function showMainUI()
 		
 		task.wait(0.2)
 		mainFrame.Visible = false
-		
 		minimizedIcon.Visible = true
 		minimizedIcon.Size = UDim2.new(0, 0, 0, 0)
 		
@@ -669,7 +610,6 @@ function showMainUI()
 		}):Play()
 	end)
 	
-	-- Restore function
 	minimizedIcon.MouseButton1Click:Connect(function()
 		tweenService:Create(minimizedIcon, TweenInfo.new(0.2), {
 			Size = UDim2.new(0, 0, 0, 0)
@@ -677,7 +617,6 @@ function showMainUI()
 		
 		task.wait(0.2)
 		minimizedIcon.Visible = false
-		
 		mainFrame.Visible = true
 		mainFrame.Size = UDim2.new(0, 0, 0, 0)
 		mainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
@@ -688,7 +627,6 @@ function showMainUI()
 		}):Play()
 	end)
 	
-	-- Exit button
 	exitBtn.MouseButton1Click:Connect(function()
 		tweenService:Create(mainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
 			Size = UDim2.new(0, 0, 0, 0),
@@ -697,41 +635,11 @@ function showMainUI()
 		task.wait(0.3)
 		gui:Destroy()
 	end)
-
-	local function addHoverEffect(btn)
-		btn.MouseEnter:Connect(function()
-			tweenService:Create(btn, TweenInfo.new(0.2), {BackgroundColor3 = COLORS.Surface:lerp(COLORS.Border, 0.2)}):Play()
-		end)
-		btn.MouseLeave:Connect(function()
-			tweenService:Create(btn, TweenInfo.new(0.2), {BackgroundColor3 = COLORS.Surface}):Play()
-		end)
-	end
-
-	addHoverEffect(minimizeBtn)
-
 	-- Entry Animation
 	mainFrame.Size = UDim2.new(0, 0, 0, 0)
 	mainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
 	local entryTween = TweenInfo.new(0.5, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out)
 	tweenService:Create(mainFrame, entryTween, {Size = UDim2.new(0, mainWidth, 0, mainHeight)}):Play()
 	tweenService:Create(mainFrame, entryTween, {Position = UDim2.new(0.5, -mainWidth/2, 0.5, -mainHeight/2)}):Play()
-	
-	makeAlwaysOnTop(mainFrame)
-	makeAlwaysOnTop(minimizedIcon)
 end
-
 showMainUI()
-
-coroutine.wrap(function()
-	while gui and gui.Parent do
-		task.wait(1)
-		for _, otherGui in ipairs(player.PlayerGui:GetChildren()) do
-			if otherGui:IsA("ScreenGui") and otherGui ~= gui then
-				if otherGui.DisplayOrder >= gui.DisplayOrder then
-					gui.DisplayOrder = otherGui.DisplayOrder + 1
-				end
-			end
-		end
-	end
-end)()
-```
