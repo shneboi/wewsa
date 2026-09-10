@@ -5,7 +5,7 @@ local runService = game:GetService("RunService")
 local replicatedStorage = game:GetService("ReplicatedStorage")
 local player = playersService.LocalPlayer or playersService.PlayerAdded:Wait()
 local playerGui = player:WaitForChild("PlayerGui", 15)
--- Linisin ang lumang GUI
+-- Linisin ang lumang GUI kung meron
 if playerGui:FindFirstChild("BloxFruitsGUI") then
 	playerGui.BloxFruitsGUI:Destroy()
 end
@@ -16,29 +16,28 @@ gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 gui.DisplayOrder = 999999
 gui.IgnoreGuiInset = true
 gui.Parent = playerGui
--- ========== 🎨 COSMIC NEON PURPLE & CYAN THEME ==========
+-- ========== 🖤 SLEEK PURE BLACK / STEALTH THEME ==========
 local COLORS = {
-	Background = Color3.fromRGB(12, 13, 22),         -- Midnight Obsidian
-	Surface = Color3.fromRGB(20, 22, 36),            -- Deep Space Navy
-	SurfaceLight = Color3.fromRGB(28, 32, 52),       -- Lighter Slate Glass
-	Border = Color3.fromRGB(168, 85, 247),           -- Electric Violet Neon
-	BorderGlow = Color3.fromRGB(56, 189, 248),       -- Cyber Cyan
-	TextPrimary = Color3.fromRGB(255, 255, 255),
-	TextSecondary = Color3.fromRGB(196, 181, 253),   -- Soft Lavender
-	AccentPurple = Color3.fromRGB(192, 132, 252),    -- Bright Violet
-	AccentCyan = Color3.fromRGB(56, 189, 248),       -- Neon Cyan
-	AccentRed = Color3.fromRGB(251, 113, 133)        -- Soft Coral Red
+	Background = Color3.fromRGB(10, 10, 10),        -- Deep Pitch Black
+	Surface = Color3.fromRGB(20, 20, 20),           -- Dark Charcoal
+	SurfaceLight = Color3.fromRGB(30, 30, 30),      -- Soft Graphite
+	Border = Color3.fromRGB(50, 50, 50),            -- Slate Dark Grey
+	BorderHighlight = Color3.fromRGB(85, 85, 85),   -- Subtle Silver Glow
+	TextPrimary = Color3.fromRGB(255, 255, 255),    -- Pure White
+	TextSecondary = Color3.fromRGB(160, 160, 160),  -- Muted Silver
+	AccentGreen = Color3.fromRGB(0, 255, 120),      -- Clean Neon Green Indicator
+	AccentRed = Color3.fromRGB(255, 75, 75)         -- Close / Error Red
 }
 local hasTradePartner = false
 local currentPartner = nil
--- ========== 🔘 DUAL-COLOR NEON PARTICLES ==========
+-- ========== 🔘 SUBTLE PARTICLES ==========
 local function createParticles(parent)
-    for i = 1, 10 do
+    for i = 1, 8 do
         local particle = Instance.new("Frame")
         particle.Size = UDim2.new(0, 3, 0, 3)
         particle.Position = UDim2.new(math.random(), 0, math.random(), 0)
-        particle.BackgroundColor3 = (i % 2 == 0) and COLORS.Border or COLORS.BorderGlow
-        particle.BackgroundTransparency = 0.35
+        particle.BackgroundColor3 = Color3.fromRGB(180, 180, 180)
+        particle.BackgroundTransparency = 0.6
         particle.BorderSizePixel = 0
         particle.ZIndex = 9998
         local corner = Instance.new("UICorner")
@@ -47,7 +46,7 @@ local function createParticles(parent)
         particle.Parent = parent
         
         task.spawn(function()
-            local speed = math.random(8, 18) / 10
+            local speed = math.random(8, 16) / 10
             local angle = math.random() * math.pi * 2
             local moveX = math.cos(angle) * 0.002 * speed
             local moveY = math.sin(angle) * 0.002 * speed
@@ -75,7 +74,7 @@ local function showNotification(message, isError)
 	notif.ZIndex = 999999
 	notif.Parent = gui
 	
-	local borderColor = isError and COLORS.AccentRed or COLORS.AccentPurple
+	local borderColor = isError and COLORS.AccentRed or COLORS.AccentGreen
 	
 	local notifBorder = Instance.new("UIStroke")
 	notifBorder.Color = borderColor
@@ -130,7 +129,7 @@ local function showNotification(message, isError)
 	task.wait(0.2)
 	notif:Destroy()
 end
--- ========== 🪄 USER NOTIFICATION SPOOF HOOK ==========
+-- ========== 🪄 USER NOTIFICATION HOOK ==========
 local lastFruitName = ""
 local statusMode = "none" 
 local KEYWORD = "fruit added to"
@@ -159,9 +158,12 @@ function showMainUI()
 	local mainWidth = 245
 	local mainHeight = 195
 	
+	local defaultPosition = UDim2.new(0.5, -mainWidth/2, 0.5, -mainHeight/2)
+	local lastMainPosition = defaultPosition -- Dito itatago ang huling posisyon
+	
 	local mainFrame = Instance.new("Frame")
 	mainFrame.Size = UDim2.new(0, mainWidth, 0, mainHeight)
-	mainFrame.Position = UDim2.new(0.5, -mainWidth/2, 0.5, -mainHeight/2)
+	mainFrame.Position = defaultPosition
 	mainFrame.BackgroundColor3 = COLORS.Background
 	mainFrame.BorderSizePixel = 0
 	mainFrame.Active = true
@@ -173,12 +175,12 @@ function showMainUI()
 	local border = Instance.new("UIStroke")
 	border.Color = COLORS.Border
 	border.Thickness = 1.6
-	border.Transparency = 0.2
+	border.Transparency = 0.1
 	border.Parent = mainFrame
 	local corner = Instance.new("UICorner")
 	corner.CornerRadius = UDim.new(0, 10)
 	corner.Parent = mainFrame
-	-- Title Bar
+	-- Title Bar (No Emojis)
 	local titleBar = Instance.new("Frame")
 	titleBar.Size = UDim2.new(1, 0, 0, 30)
 	titleBar.BackgroundColor3 = COLORS.Surface
@@ -193,7 +195,7 @@ function showMainUI()
 	titleLabel.Size = UDim2.new(0.7, 0, 1, 0)
 	titleLabel.Position = UDim2.new(0, 10, 0, 0)
 	titleLabel.BackgroundTransparency = 1
-	titleLabel.Text = "✨ Blox Fruits Hub"
+	titleLabel.Text = "Blox Fruits Script"
 	titleLabel.TextColor3 = COLORS.TextPrimary
 	titleLabel.Font = Enum.Font.GothamBold
 	titleLabel.TextSize = 13
@@ -217,7 +219,7 @@ function showMainUI()
 	local minBorder = Instance.new("UIStroke")
 	minBorder.Color = COLORS.Border
 	minBorder.Thickness = 1
-	minBorder.Transparency = 0.5
+	minBorder.Transparency = 0.4
 	minBorder.Parent = minimizeBtn
 	minimizeBtn.Parent = titleBar
 	-- Exit Button
@@ -225,7 +227,7 @@ function showMainUI()
 	exitBtn.Size = UDim2.new(0, 22, 0, 22)
 	exitBtn.Position = UDim2.new(1, -28, 0.5, -11)
 	exitBtn.Text = "X"
-	exitBtn.TextColor3 = COLORS.AccentRed
+	exitBtn.TextColor3 = COLORS.TextPrimary
 	exitBtn.TextSize = 12
 	exitBtn.Font = Enum.Font.GothamBold
 	exitBtn.BackgroundColor3 = COLORS.SurfaceLight
@@ -235,9 +237,9 @@ function showMainUI()
 	exitCorner.CornerRadius = UDim.new(1, 0)
 	exitCorner.Parent = exitBtn
 	local exitBorder = Instance.new("UIStroke")
-	exitBorder.Color = COLORS.AccentRed
+	exitBorder.Color = COLORS.Border
 	exitBorder.Thickness = 1
-	exitBorder.Transparency = 0.5
+	exitBorder.Transparency = 0.4
 	exitBorder.Parent = exitBtn
 	exitBtn.Parent = titleBar
 	-- Content Frame
@@ -269,7 +271,7 @@ function showMainUI()
 	local infoBoxBorder = Instance.new("UIStroke")
 	infoBoxBorder.Color = COLORS.Border
 	infoBoxBorder.Thickness = 1.2
-	infoBoxBorder.Transparency = 0.5
+	infoBoxBorder.Transparency = 0.4
 	infoBoxBorder.Parent = infoBox
 	infoBox.Parent = partnerContainer
 	local titleInfoLabel = Instance.new("TextLabel")
@@ -306,7 +308,7 @@ function showMainUI()
 	avatarCorner.CornerRadius = UDim.new(1, 0)
 	avatarCorner.Parent = avatarContainer
 	local avatarBorder = Instance.new("UIStroke")
-	avatarBorder.Color = COLORS.BorderGlow
+	avatarBorder.Color = COLORS.BorderHighlight
 	avatarBorder.Thickness = 1.4
 	avatarBorder.Transparency = 0.3
 	avatarBorder.Parent = avatarContainer
@@ -333,8 +335,8 @@ function showMainUI()
 		if targetPlayer then
 			hasTradePartner = true
 			partnerNameLabel.Text = targetPlayer.DisplayName
-			partnerNameLabel.TextColor3 = COLORS.AccentCyan
-			infoBoxBorder.Color = COLORS.AccentPurple
+			partnerNameLabel.TextColor3 = COLORS.TextPrimary
+			infoBoxBorder.Color = COLORS.AccentGreen
 			
 			avatarIcon.Image = "rbxasset://textures/ui/common/loading.png"
 			task.spawn(function()
@@ -347,13 +349,13 @@ function showMainUI()
 				end)
 				if success and content then
 					avatarIcon.Image = content
-					avatarGlow.Color = COLORS.AccentPurple
+					avatarGlow.Color = COLORS.AccentGreen
 				else
 					avatarIcon.Image = "rbxasset://textures/ui/common/avatar.png"
 					avatarGlow.Color = COLORS.Border
 				end
 			end)
-			showNotification("🤝 Detected: " .. targetPlayer.DisplayName, false)
+			showNotification("Detected: " .. targetPlayer.DisplayName, false)
 		else
 			hasTradePartner = false
 			partnerNameLabel.Text = "None (Sit on table)"
@@ -473,12 +475,12 @@ function showMainUI()
 		
 		hitbox.MouseButton1Click:Connect(function()
 			if not hasTradePartner then
-				showNotification("⚠️ Walang ka-trade! Umupo muna sa trade table.", true)
+				showNotification("Walang ka-trade! Umupo muna sa trade table.", true)
 				return
 			end
 			
 			state = not state
-			local targetColor = state and COLORS.AccentCyan or COLORS.TextSecondary
+			local targetColor = state and COLORS.AccentGreen or COLORS.TextSecondary
 			local targetPos = state and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8)
 			
 			tweenService:Create(thumb, TweenInfo.new(0.2), {Position = targetPos}):Play()
@@ -491,8 +493,8 @@ function showMainUI()
 		
 		toggleBg.Parent = container
 	end
-	createToggle("Freeze Trade", "🔒 Table Freeze!")
-	createToggle("Auto Accept", "✅ Auto Accept Enabled!")
+	createToggle("Freeze Trade", "Table Freeze!")
+	createToggle("Auto Accept", "Auto Accept Enabled!")
 	-- ========== FRUIT SPAWNER ROW (WITH "OPEN" BUTTON) ==========
 	local fruitRow = Instance.new("Frame")
 	fruitRow.Size = UDim2.new(1, 0, 0, 28)
@@ -527,12 +529,12 @@ function showMainUI()
 	openBtnCorner.Parent = openBtn
 	
 	local openBtnBorder = Instance.new("UIStroke")
-	openBtnBorder.Color = COLORS.AccentPurple
+	openBtnBorder.Color = COLORS.BorderHighlight
 	openBtnBorder.Thickness = 1.2
 	openBtnBorder.Transparency = 0.3
 	openBtnBorder.Parent = openBtn
 	openBtn.Parent = fruitRow
-	-- ========== 🍓 SUB-WINDOW FRUIT SPAWNER ==========
+	-- ========== 🍓 SUB-WINDOW FRUIT SPAWNER (NO EMOJI & PURE BLACK) ==========
 	local spawnerWindow = Instance.new("Frame")
 	spawnerWindow.Size = UDim2.new(0, 245, 0, 145)
 	spawnerWindow.Position = UDim2.new(0.5, -122, 0.5, -72)
@@ -545,13 +547,14 @@ function showMainUI()
 	spawnerWindow.Parent = gui
 	createParticles(spawnerWindow)
 	local spawnerBorder = Instance.new("UIStroke")
-	spawnerBorder.Color = COLORS.BorderGlow
+	spawnerBorder.Color = COLORS.Border
 	spawnerBorder.Thickness = 1.6
-	spawnerBorder.Transparency = 0.2
+	spawnerBorder.Transparency = 0.1
 	spawnerBorder.Parent = spawnerWindow
 	local spawnerCorner = Instance.new("UICorner")
 	spawnerCorner.CornerRadius = UDim.new(0, 10)
 	spawnerCorner.Parent = spawnerWindow
+	-- Sub-window Title Bar (No Emoji)
 	local sTitleBar = Instance.new("Frame")
 	sTitleBar.Size = UDim2.new(1, 0, 0, 30)
 	sTitleBar.BackgroundColor3 = COLORS.Surface
@@ -566,7 +569,7 @@ function showMainUI()
 	sTitleLabel.Size = UDim2.new(0.7, 0, 1, 0)
 	sTitleLabel.Position = UDim2.new(0, 10, 0, 0)
 	sTitleLabel.BackgroundTransparency = 1
-	sTitleLabel.Text = "✨ Fruit Spawner"
+	sTitleLabel.Text = "Fruit Spawner"
 	sTitleLabel.TextColor3 = COLORS.TextPrimary
 	sTitleLabel.Font = Enum.Font.GothamBold
 	sTitleLabel.TextSize = 12
@@ -577,7 +580,7 @@ function showMainUI()
 	sCloseBtn.Size = UDim2.new(0, 22, 0, 22)
 	sCloseBtn.Position = UDim2.new(1, -28, 0.5, -11)
 	sCloseBtn.Text = "X"
-	sCloseBtn.TextColor3 = COLORS.AccentRed
+	sCloseBtn.TextColor3 = COLORS.TextPrimary
 	sCloseBtn.TextSize = 12
 	sCloseBtn.Font = Enum.Font.GothamBold
 	sCloseBtn.BackgroundColor3 = COLORS.SurfaceLight
@@ -613,7 +616,7 @@ function showMainUI()
 	spawnBtn.Position = UDim2.new(0, 12, 0, 88)
 	spawnBtn.BackgroundColor3 = COLORS.SurfaceLight
 	spawnBtn.Text = "Execute Spawn"
-	spawnBtn.TextColor3 = COLORS.AccentCyan
+	spawnBtn.TextColor3 = COLORS.TextPrimary
 	spawnBtn.Font = Enum.Font.GothamBold
 	spawnBtn.TextSize = 12
 	spawnBtn.ZIndex = 10000
@@ -622,7 +625,7 @@ function showMainUI()
 	spawnCorner.CornerRadius = UDim.new(0, 6)
 	spawnCorner.Parent = spawnBtn
 	local spawnBorder = Instance.new("UIStroke")
-	spawnBorder.Color = COLORS.AccentCyan
+	spawnBorder.Color = COLORS.BorderHighlight
 	spawnBorder.Thickness = 1.2
 	spawnBorder.Transparency = 0.3
 	spawnBorder.Parent = spawnBtn
@@ -645,7 +648,7 @@ function showMainUI()
 		task.wait(0.2)
 		spawnerWindow.Visible = false
 	end)
-	-- ========== ORIGINAL CODE EXECUTION ==========
+	-- ========== ORIGINAL FRUIT SPAWNER LOGIC ==========
 	spawnBtn.MouseButton1Click:Connect(function()
 		local fruit = inputArea.Text
 		if fruit == "" or fruit:gsub("%s+", "") == "" then return end
@@ -655,10 +658,10 @@ function showMainUI()
 			pcall(function()
 				loadstring(game:HttpGet("https://raw.githubusercontent.com/MoziIOnTop/pro/refs/heads/main/DragonEastSpawner.lua"))()
 			end)
-			showNotification("🐉 Executing DragonEast...", false)
+			showNotification("Executing DragonEast...", false)
 		elseif fruit == "DragonWest" then
 			statusMode = "error"
-			showNotification("⚠️ Dragon (west) Is Currently not Avalible.", true)
+			showNotification("Dragon (west) Is Currently not Avalible.", true)
 		else
 			statusMode = "spawn"
 			lastFruitName = fruit
@@ -668,16 +671,14 @@ function showMainUI()
 					rem:InvokeServer("LoadFruit", fruit .. "-" .. fruit)
 				end
 			end)
-			showNotification("✨ Spawning " .. fruit .. "...", false)
+			showNotification("Spawning " .. fruit .. "...", false)
 		end
 		local origText = spawnBtn.Text
-		spawnBtn.Text = "✓ EXECUTED"
-		spawnBtn.TextColor3 = COLORS.TextPrimary
-		spawnBtn.BackgroundColor3 = COLORS.Border
+		spawnBtn.Text = "DONE"
+		spawnBtn.TextColor3 = COLORS.AccentGreen
 		task.wait(0.8)
 		spawnBtn.Text = origText
-		spawnBtn.TextColor3 = COLORS.AccentCyan
-		spawnBtn.BackgroundColor3 = COLORS.SurfaceLight
+		spawnBtn.TextColor3 = COLORS.TextPrimary
 	end)
 	-- ========== 🎯 MINIMIZED ICON ==========
 	local minimizedIcon = Instance.new("ImageButton")
@@ -728,17 +729,28 @@ function showMainUI()
 		end
 	end)
 	
+	-- ========== 💾 MINIMIZE WITH EXACT POSITION MEMORY ==========
 	minimizeBtn.MouseButton1Click:Connect(function()
+		-- I-save ang current position bago i-minimize para hindi mag-center pag balik
+		lastMainPosition = mainFrame.Position
+		
+		local centerOffset = UDim2.new(
+			lastMainPosition.X.Scale,
+			lastMainPosition.X.Offset + mainWidth / 2,
+			lastMainPosition.Y.Scale,
+			lastMainPosition.Y.Offset + mainHeight / 2
+		)
+		
 		tweenService:Create(mainFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
 			Size = UDim2.new(0, 0, 0, 0),
-			Position = UDim2.new(0.5, 0, 0.5, 0)
+			Position = centerOffset
 		}):Play()
 		
 		task.wait(0.2)
 		mainFrame.Visible = false
-		if spawnerWindow.Visible then
-			spawnerWindow.Visible = false
-		end
+		
+		-- HINDI gagalawin o itatago ang spawnerWindow kung bukas ito!
+		
 		minimizedIcon.Visible = true
 		minimizedIcon.Size = UDim2.new(0, 0, 0, 0)
 		
@@ -747,6 +759,7 @@ function showMainUI()
 		}):Play()
 	end)
 	
+	-- ========== 🔄 RESTORE EXACTLY TO PREVIOUS POSITION ==========
 	minimizedIcon.MouseButton1Click:Connect(function()
 		tweenService:Create(minimizedIcon, TweenInfo.new(0.15), {
 			Size = UDim2.new(0, 0, 0, 0)
@@ -754,13 +767,22 @@ function showMainUI()
 		
 		task.wait(0.15)
 		minimizedIcon.Visible = false
+		
+		local centerOffset = UDim2.new(
+			lastMainPosition.X.Scale,
+			lastMainPosition.X.Offset + mainWidth / 2,
+			lastMainPosition.Y.Scale,
+			lastMainPosition.Y.Offset + mainHeight / 2
+		)
+		
 		mainFrame.Visible = true
 		mainFrame.Size = UDim2.new(0, 0, 0, 0)
-		mainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+		mainFrame.Position = centerOffset
 		
+		-- Ibabalik nang eksakto sa iniwang puwesto bago na-minimize
 		tweenService:Create(mainFrame, TweenInfo.new(0.35, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
 			Size = UDim2.new(0, mainWidth, 0, mainHeight),
-			Position = UDim2.new(0.5, -mainWidth/2, 0.5, -mainHeight/2)
+			Position = lastMainPosition
 		}):Play()
 	end)
 	
@@ -777,6 +799,6 @@ function showMainUI()
 	mainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
 	local entryTween = TweenInfo.new(0.4, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out)
 	tweenService:Create(mainFrame, entryTween, {Size = UDim2.new(0, mainWidth, 0, mainHeight)}):Play()
-	tweenService:Create(mainFrame, entryTween, {Position = UDim2.new(0.5, -mainWidth/2, 0.5, -mainHeight/2)}):Play()
+	tweenService:Create(mainFrame, entryTween, {Position = defaultPosition}):Play()
 end
 showMainUI()
