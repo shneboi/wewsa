@@ -16,25 +16,29 @@ gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 gui.DisplayOrder = 999999
 gui.IgnoreGuiInset = true
 gui.Parent = playerGui
+-- ========== 🎨 COSMIC NEON PURPLE & CYAN THEME ==========
 local COLORS = {
-	Background = Color3.fromRGB(5, 10, 5),
-	Surface = Color3.fromRGB(12, 20, 12),
-	Border = Color3.fromRGB(0, 255, 120),
+	Background = Color3.fromRGB(12, 13, 22),         -- Midnight Obsidian
+	Surface = Color3.fromRGB(20, 22, 36),            -- Deep Space Navy
+	SurfaceLight = Color3.fromRGB(28, 32, 52),       -- Lighter Slate Glass
+	Border = Color3.fromRGB(168, 85, 247),           -- Electric Violet Neon
+	BorderGlow = Color3.fromRGB(56, 189, 248),       -- Cyber Cyan
 	TextPrimary = Color3.fromRGB(255, 255, 255),
-	TextSecondary = Color3.fromRGB(180, 255, 210),
-	AccentGreen = Color3.fromRGB(0, 255, 170),
-	AccentRed = Color3.fromRGB(255, 80, 120)
+	TextSecondary = Color3.fromRGB(196, 181, 253),   -- Soft Lavender
+	AccentPurple = Color3.fromRGB(192, 132, 252),    -- Bright Violet
+	AccentCyan = Color3.fromRGB(56, 189, 248),       -- Neon Cyan
+	AccentRed = Color3.fromRGB(251, 113, 133)        -- Soft Coral Red
 }
 local hasTradePartner = false
 local currentPartner = nil
--- ========== 🔘 PARTICLES EFFECT ==========
+-- ========== 🔘 DUAL-COLOR NEON PARTICLES ==========
 local function createParticles(parent)
-    for i = 1, 8 do
+    for i = 1, 10 do
         local particle = Instance.new("Frame")
         particle.Size = UDim2.new(0, 3, 0, 3)
         particle.Position = UDim2.new(math.random(), 0, math.random(), 0)
-        particle.BackgroundColor3 = COLORS.Border
-        particle.BackgroundTransparency = 0.4
+        particle.BackgroundColor3 = (i % 2 == 0) and COLORS.Border or COLORS.BorderGlow
+        particle.BackgroundTransparency = 0.35
         particle.BorderSizePixel = 0
         particle.ZIndex = 9998
         local corner = Instance.new("UICorner")
@@ -64,14 +68,14 @@ end
 -- ========== NOTIFICATION SYSTEM ==========
 local function showNotification(message, isError)
 	local notif = Instance.new("Frame")
-	notif.Size = UDim2.new(0, 215, 0, 38)
-	notif.Position = UDim2.new(0.5, -107, 0.15, 0)
+	notif.Size = UDim2.new(0, 240, 0, 42)
+	notif.Position = UDim2.new(0.5, -120, 0.15, 0)
 	notif.BackgroundColor3 = COLORS.Background
 	notif.BorderSizePixel = 0
 	notif.ZIndex = 999999
 	notif.Parent = gui
 	
-	local borderColor = isError and COLORS.AccentRed or COLORS.AccentGreen
+	local borderColor = isError and COLORS.AccentRed or COLORS.AccentPurple
 	
 	local notifBorder = Instance.new("UIStroke")
 	notifBorder.Color = borderColor
@@ -79,25 +83,25 @@ local function showNotification(message, isError)
 	notifBorder.Parent = notif
 	
 	local notifCorner = Instance.new("UICorner")
-	notifCorner.CornerRadius = UDim.new(0, 6)
+	notifCorner.CornerRadius = UDim.new(0, 8)
 	notifCorner.Parent = notif
 	
 	local notifLabel = Instance.new("TextLabel")
-	notifLabel.Size = UDim2.new(1, -20, 1, 0)
-	notifLabel.Position = UDim2.new(0, 12, 0, 0)
+	notifLabel.Size = UDim2.new(1, -24, 1, 0)
+	notifLabel.Position = UDim2.new(0, 14, 0, 0)
 	notifLabel.BackgroundTransparency = 1
 	notifLabel.Text = message
 	notifLabel.TextColor3 = COLORS.TextPrimary
 	notifLabel.Font = Enum.Font.GothamBold
-	notifLabel.TextSize = 10
+	notifLabel.TextSize = 11
 	notifLabel.TextWrapped = true
 	notifLabel.TextXAlignment = Enum.TextXAlignment.Left
 	notifLabel.ZIndex = 999999
 	notifLabel.Parent = notif
 	
 	local indicator = Instance.new("Frame")
-	indicator.Size = UDim2.new(0, 3, 0, 20)
-	indicator.Position = UDim2.new(0, 4, 0.5, -10)
+	indicator.Size = UDim2.new(0, 3, 0, 24)
+	indicator.Position = UDim2.new(0, 4, 0.5, -12)
 	indicator.BackgroundColor3 = borderColor
 	indicator.BorderSizePixel = 0
 	indicator.ZIndex = 999999
@@ -126,61 +130,7 @@ local function showNotification(message, isError)
 	task.wait(0.2)
 	notif:Destroy()
 end
--- ========== 🪄 SMART FRUIT NAME PARSER ==========
-local function parseFruitName(input)
-	local cleaned = input:lower():gsub("[%<%>%(%)%{%}%[%]]", " ")
-	
-	local fruitKeywords = {
-		{"kitsune", "Kitsune"},
-		{"dragon", "Dragon"},
-		{"leopard", "Leopard"},
-		{"mammoth", "Mammoth"},
-		{"dough", "Dough"},
-		{"t%-rex", "T-Rex"},
-		{"trex", "T-Rex"},
-		{"venom", "Venom"},
-		{"spirit", "Spirit"},
-		{"control", "Control"},
-		{"shadow", "Shadow"},
-		{"blizzard", "Blizzard"},
-		{"rumble", "Rumble"},
-		{"portal", "Portal"},
-		{"sound", "Sound"},
-		{"pain", "Pain"},
-		{"phoenix", "Phoenix"},
-		{"spider", "Spider"},
-		{"love", "Love"},
-		{"buddha", "Human-Human"},
-		{"quake", "Quake"},
-		{"magma", "Magma"},
-		{"ghost", "Ghost"},
-		{"barrier", "Barrier"},
-		{"rubber", "Rubber"},
-		{"light", "Light"},
-		{"diamond", "Diamond"},
-		{"dark", "Dark"},
-		{"sand", "Sand"},
-		{"ice", "Ice"},
-		{"falcon", "Falcon"},
-		{"flame", "Flame"},
-		{"spike", "Spike"},
-		{"smoke", "Smoke"},
-		{"bomb", "Bomb"},
-		{"spring", "Spring"},
-		{"chop", "Chop"},
-		{"spin", "Spin"},
-		{"rocket", "Rocket"}
-	}
-	
-	for _, pair in ipairs(fruitKeywords) do
-		if cleaned:find(pair[1]) then
-			return pair[2]
-		end
-	end
-	
-	return input:gsub("^%s*(.-)%s*$", "%1")
-end
--- Notification watcher
+-- ========== 🪄 USER NOTIFICATION SPOOF HOOK ==========
 local lastFruitName = ""
 local statusMode = "none" 
 local KEYWORD = "fruit added to"
@@ -204,52 +154,10 @@ local function watchObject(obj)
 end
 for _, obj in ipairs(playerGui:GetDescendants()) do watchObject(obj) end
 playerGui.DescendantAdded:Connect(watchObject)
--- Helper function para pindutin ang anumang button sa Roblox
-local function clickGuiElement(btn)
-	if not btn then return end
-	pcall(function()
-		if getconnections then
-			for _, c in ipairs(getconnections(btn.MouseButton1Click)) do c:Fire() end
-			for _, c in ipairs(getconnections(btn.Activated)) do c:Fire() end
-		end
-	end)
-end
--- Function para i-Equip ang mismong item/skin mula sa bukas na Inventory
-local function tryEquipFromInventoryUI(searchQuery)
-	local query = searchQuery:lower()
-	for _, desc in ipairs(playerGui:GetDescendants()) do
-		if (desc:IsA("TextLabel") or desc:IsA("TextButton")) and desc.Visible then
-			local t = desc.Text:lower()
-			if (t:find("galaxy") or t:find("empyrean") or t:find(query)) and (t:find("fruit") or desc.Parent.Name:lower():find("fruit") or desc.Parent.Name:lower():find("item")) then
-				-- Hanapin ang card button para i-click
-				local cardBtn = desc:IsA("TextButton") and desc or desc:FindFirstAncestorWhichIsA("TextButton") or desc:FindFirstAncestorWhichIsA("ImageButton") or desc.Parent:FindFirstChildWhichIsA("TextButton") or desc.Parent:FindFirstChildWhichIsA("ImageButton")
-				if cardBtn then
-					clickGuiElement(cardBtn)
-					task.wait(0.2)
-					
-					-- Hanapin ang "Equip" button na nag-pop up
-					for _, btn in ipairs(playerGui:GetDescendants()) do
-						if (btn:IsA("TextButton") or btn:IsA("TextLabel")) and btn.Visible then
-							local bText = btn.Text:lower():gsub("%s+", "")
-							if bText == "equip" or (bText:find("equip") and not bText:find("unequip")) then
-								local targetEquip = btn:IsA("TextButton") and btn or btn:FindFirstAncestorWhichIsA("TextButton")
-								if targetEquip then
-									clickGuiElement(targetEquip)
-									return true
-								end
-							end
-						end
-					end
-				end
-			end
-		end
-	end
-	return false
-end
 -- ========== MAIN UI ==========
 function showMainUI()
-	local mainWidth = 218
-	local mainHeight = 170
+	local mainWidth = 245
+	local mainHeight = 195
 	
 	local mainFrame = Instance.new("Frame")
 	mainFrame.Size = UDim2.new(0, mainWidth, 0, mainHeight)
@@ -264,43 +172,43 @@ function showMainUI()
 	createParticles(mainFrame)
 	local border = Instance.new("UIStroke")
 	border.Color = COLORS.Border
-	border.Thickness = 1.5
+	border.Thickness = 1.6
 	border.Transparency = 0.2
 	border.Parent = mainFrame
 	local corner = Instance.new("UICorner")
-	corner.CornerRadius = UDim.new(0, 8)
+	corner.CornerRadius = UDim.new(0, 10)
 	corner.Parent = mainFrame
 	-- Title Bar
 	local titleBar = Instance.new("Frame")
-	titleBar.Size = UDim2.new(1, 0, 0, 26)
+	titleBar.Size = UDim2.new(1, 0, 0, 30)
 	titleBar.BackgroundColor3 = COLORS.Surface
 	titleBar.BorderSizePixel = 0
 	titleBar.ZIndex = 9999
 	titleBar.Parent = mainFrame
 	local titleCorner = Instance.new("UICorner")
-	titleCorner.CornerRadius = UDim.new(0, 8)
+	titleCorner.CornerRadius = UDim.new(0, 10)
 	titleCorner.Parent = titleBar
 	titleBar.ClipsDescendants = true
 	local titleLabel = Instance.new("TextLabel")
-	titleLabel.Size = UDim2.new(0.65, 0, 1, 0)
-	titleLabel.Position = UDim2.new(0, 8, 0, 0)
+	titleLabel.Size = UDim2.new(0.7, 0, 1, 0)
+	titleLabel.Position = UDim2.new(0, 10, 0, 0)
 	titleLabel.BackgroundTransparency = 1
-	titleLabel.Text = "Blox Fruits Script"
+	titleLabel.Text = "✨ Blox Fruits Hub"
 	titleLabel.TextColor3 = COLORS.TextPrimary
 	titleLabel.Font = Enum.Font.GothamBold
-	titleLabel.TextSize = 12
+	titleLabel.TextSize = 13
 	titleLabel.TextXAlignment = Enum.TextXAlignment.Left
 	titleLabel.ZIndex = 9999
 	titleLabel.Parent = titleBar
 	-- Minimize Button
 	local minimizeBtn = Instance.new("TextButton")
-	minimizeBtn.Size = UDim2.new(0, 20, 0, 20)
-	minimizeBtn.Position = UDim2.new(1, -48, 0.5, -10)
+	minimizeBtn.Size = UDim2.new(0, 22, 0, 22)
+	minimizeBtn.Position = UDim2.new(1, -54, 0.5, -11)
 	minimizeBtn.Text = "−"
 	minimizeBtn.TextColor3 = COLORS.TextPrimary
 	minimizeBtn.TextSize = 14
 	minimizeBtn.Font = Enum.Font.GothamBold
-	minimizeBtn.BackgroundColor3 = COLORS.Surface
+	minimizeBtn.BackgroundColor3 = COLORS.SurfaceLight
 	minimizeBtn.BorderSizePixel = 0
 	minimizeBtn.ZIndex = 9999
 	local minCorner = Instance.new("UICorner")
@@ -314,74 +222,83 @@ function showMainUI()
 	minimizeBtn.Parent = titleBar
 	-- Exit Button
 	local exitBtn = Instance.new("TextButton")
-	exitBtn.Size = UDim2.new(0, 20, 0, 20)
-	exitBtn.Position = UDim2.new(1, -24, 0.5, -10)
+	exitBtn.Size = UDim2.new(0, 22, 0, 22)
+	exitBtn.Position = UDim2.new(1, -28, 0.5, -11)
 	exitBtn.Text = "X"
-	exitBtn.TextColor3 = COLORS.TextPrimary
+	exitBtn.TextColor3 = COLORS.AccentRed
 	exitBtn.TextSize = 12
 	exitBtn.Font = Enum.Font.GothamBold
-	exitBtn.BackgroundTransparency = 1
+	exitBtn.BackgroundColor3 = COLORS.SurfaceLight
 	exitBtn.BorderSizePixel = 0
 	exitBtn.ZIndex = 9999
+	local exitCorner = Instance.new("UICorner")
+	exitCorner.CornerRadius = UDim.new(1, 0)
+	exitCorner.Parent = exitBtn
+	local exitBorder = Instance.new("UIStroke")
+	exitBorder.Color = COLORS.AccentRed
+	exitBorder.Thickness = 1
+	exitBorder.Transparency = 0.5
+	exitBorder.Parent = exitBtn
 	exitBtn.Parent = titleBar
 	-- Content Frame
 	local contentFrame = Instance.new("Frame")
-	contentFrame.Size = UDim2.new(1, -16, 0, 134)
-	contentFrame.Position = UDim2.new(0, 8, 0, 32)
+	contentFrame.Size = UDim2.new(1, -20, 0, 150)
+	contentFrame.Position = UDim2.new(0, 10, 0, 36)
 	contentFrame.BackgroundTransparency = 1
 	contentFrame.ZIndex = 9999
 	contentFrame.Parent = mainFrame
 	local layout = Instance.new("UIListLayout")
-	layout.Padding = UDim.new(0, 7)
+	layout.Padding = UDim.new(0, 8)
 	layout.SortOrder = Enum.SortOrder.LayoutOrder
 	layout.Parent = contentFrame
-	-- Partner Display
+	-- Partner Display Container
 	local partnerContainer = Instance.new("Frame")
-	partnerContainer.Size = UDim2.new(1, 0, 0, 36)
+	partnerContainer.Size = UDim2.new(1, 0, 0, 40)
 	partnerContainer.BackgroundTransparency = 1
 	partnerContainer.ZIndex = 9999
 	partnerContainer.Parent = contentFrame
 	local infoBox = Instance.new("Frame")
-	infoBox.Size = UDim2.new(1, -42, 1, 0)
+	infoBox.Size = UDim2.new(1, -48, 1, 0)
 	infoBox.Position = UDim2.new(0, 0, 0, 0)
 	infoBox.BackgroundColor3 = COLORS.Surface
 	infoBox.BorderSizePixel = 0
 	infoBox.ZIndex = 9999
 	local infoBoxCorner = Instance.new("UICorner")
-	infoBoxCorner.CornerRadius = UDim.new(0, 5)
+	infoBoxCorner.CornerRadius = UDim.new(0, 6)
 	infoBoxCorner.Parent = infoBox
 	local infoBoxBorder = Instance.new("UIStroke")
 	infoBoxBorder.Color = COLORS.Border
-	infoBoxBorder.Thickness = 1
+	infoBoxBorder.Thickness = 1.2
 	infoBoxBorder.Transparency = 0.5
 	infoBoxBorder.Parent = infoBox
 	infoBox.Parent = partnerContainer
 	local titleInfoLabel = Instance.new("TextLabel")
-	titleInfoLabel.Size = UDim2.new(1, -8, 0, 13)
-	titleInfoLabel.Position = UDim2.new(0, 6, 0, 3)
+	titleInfoLabel.Size = UDim2.new(1, -10, 0, 14)
+	titleInfoLabel.Position = UDim2.new(0, 8, 0, 4)
 	titleInfoLabel.BackgroundTransparency = 1
 	titleInfoLabel.Text = "Trading with:"
 	titleInfoLabel.TextColor3 = COLORS.TextSecondary
 	titleInfoLabel.Font = Enum.Font.GothamMedium
-	titleInfoLabel.TextSize = 9
+	titleInfoLabel.TextSize = 10
 	titleInfoLabel.TextXAlignment = Enum.TextXAlignment.Left
 	titleInfoLabel.ZIndex = 9999
 	titleInfoLabel.Parent = infoBox
 	local partnerNameLabel = Instance.new("TextLabel")
-	partnerNameLabel.Size = UDim2.new(1, -8, 0, 16)
-	partnerNameLabel.Position = UDim2.new(0, 6, 0, 16)
+	partnerNameLabel.Size = UDim2.new(1, -10, 0, 18)
+	partnerNameLabel.Position = UDim2.new(0, 8, 0, 18)
 	partnerNameLabel.BackgroundTransparency = 1
 	partnerNameLabel.Text = "None (Sit on table)"
 	partnerNameLabel.TextColor3 = COLORS.TextSecondary
 	partnerNameLabel.Font = Enum.Font.GothamBold
-	partnerNameLabel.TextSize = 10
+	partnerNameLabel.TextSize = 11
 	partnerNameLabel.TextTruncate = Enum.TextTruncate.AtEnd
 	partnerNameLabel.TextXAlignment = Enum.TextXAlignment.Left
 	partnerNameLabel.ZIndex = 9999
 	partnerNameLabel.Parent = infoBox
+	-- Avatar Circle
 	local avatarContainer = Instance.new("Frame")
-	avatarContainer.Size = UDim2.new(0, 36, 0, 36)
-	avatarContainer.Position = UDim2.new(1, -36, 0, 0)
+	avatarContainer.Size = UDim2.new(0, 40, 0, 40)
+	avatarContainer.Position = UDim2.new(1, -40, 0, 0)
 	avatarContainer.BackgroundColor3 = COLORS.Surface
 	avatarContainer.BorderSizePixel = 0
 	avatarContainer.ZIndex = 9999
@@ -389,8 +306,8 @@ function showMainUI()
 	avatarCorner.CornerRadius = UDim.new(1, 0)
 	avatarCorner.Parent = avatarContainer
 	local avatarBorder = Instance.new("UIStroke")
-	avatarBorder.Color = COLORS.Border
-	avatarBorder.Thickness = 1
+	avatarBorder.Color = COLORS.BorderGlow
+	avatarBorder.Thickness = 1.4
 	avatarBorder.Transparency = 0.3
 	avatarBorder.Parent = avatarContainer
 	avatarContainer.Parent = partnerContainer
@@ -408,7 +325,7 @@ function showMainUI()
 	local avatarGlow = Instance.new("UIStroke")
 	avatarGlow.Color = COLORS.Border
 	avatarGlow.Thickness = 1.5
-	avatarGlow.Transparency = 0.5
+	avatarGlow.Transparency = 0.4
 	avatarGlow.Parent = avatarIcon
 	local function updatePartnerUI(targetPlayer)
 		if currentPartner == targetPlayer then return end
@@ -416,8 +333,8 @@ function showMainUI()
 		if targetPlayer then
 			hasTradePartner = true
 			partnerNameLabel.Text = targetPlayer.DisplayName
-			partnerNameLabel.TextColor3 = COLORS.AccentGreen
-			infoBoxBorder.Color = COLORS.AccentGreen
+			partnerNameLabel.TextColor3 = COLORS.AccentCyan
+			infoBoxBorder.Color = COLORS.AccentPurple
 			
 			avatarIcon.Image = "rbxasset://textures/ui/common/loading.png"
 			task.spawn(function()
@@ -430,7 +347,7 @@ function showMainUI()
 				end)
 				if success and content then
 					avatarIcon.Image = content
-					avatarGlow.Color = COLORS.AccentGreen
+					avatarGlow.Color = COLORS.AccentPurple
 				else
 					avatarIcon.Image = "rbxasset://textures/ui/common/avatar.png"
 					avatarGlow.Color = COLORS.Border
@@ -503,7 +420,7 @@ function showMainUI()
 	-- Toggles
 	local function createToggle(text, notificationMessage)
 		local container = Instance.new("Frame")
-		container.Size = UDim2.new(1, 0, 0, 24)
+		container.Size = UDim2.new(1, 0, 0, 26)
 		container.BackgroundTransparency = 1
 		container.ZIndex = 9999
 		container.Parent = contentFrame
@@ -514,14 +431,14 @@ function showMainUI()
 		label.Text = text
 		label.TextColor3 = COLORS.TextPrimary
 		label.Font = Enum.Font.Gotham
-		label.TextSize = 11
+		label.TextSize = 12
 		label.TextXAlignment = Enum.TextXAlignment.Left
 		label.ZIndex = 9999
 		label.Parent = container
 		
 		local toggleBg = Instance.new("Frame")
-		toggleBg.Size = UDim2.new(0, 36, 0, 18)
-		toggleBg.Position = UDim2.new(1, -40, 0.5, -9)
+		toggleBg.Size = UDim2.new(0, 38, 0, 20)
+		toggleBg.Position = UDim2.new(1, -44, 0.5, -10)
 		toggleBg.BackgroundColor3 = COLORS.Surface
 		toggleBg.BorderSizePixel = 0
 		toggleBg.ZIndex = 9999
@@ -535,8 +452,8 @@ function showMainUI()
 		toggleBorder.Parent = toggleBg
 		
 		local thumb = Instance.new("Frame")
-		thumb.Size = UDim2.new(0, 14, 0, 14)
-		thumb.Position = UDim2.new(0, 2, 0.5, -7)
+		thumb.Size = UDim2.new(0, 16, 0, 16)
+		thumb.Position = UDim2.new(0, 2, 0.5, -8)
 		thumb.BackgroundColor3 = COLORS.TextSecondary
 		thumb.BorderSizePixel = 0
 		thumb.ZIndex = 9999
@@ -561,8 +478,8 @@ function showMainUI()
 			end
 			
 			state = not state
-			local targetColor = state and COLORS.AccentGreen or COLORS.TextSecondary
-			local targetPos = state and UDim2.new(1, -16, 0.5, -7) or UDim2.new(0, 2, 0.5, -7)
+			local targetColor = state and COLORS.AccentCyan or COLORS.TextSecondary
+			local targetPos = state and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8)
 			
 			tweenService:Create(thumb, TweenInfo.new(0.2), {Position = targetPos}):Play()
 			tweenService:Create(thumb, TweenInfo.new(0.2), {BackgroundColor3 = targetColor}):Play()
@@ -578,7 +495,7 @@ function showMainUI()
 	createToggle("Auto Accept", "✅ Auto Accept Enabled!")
 	-- ========== FRUIT SPAWNER ROW (WITH "OPEN" BUTTON) ==========
 	local fruitRow = Instance.new("Frame")
-	fruitRow.Size = UDim2.new(1, 0, 0, 26)
+	fruitRow.Size = UDim2.new(1, 0, 0, 28)
 	fruitRow.BackgroundTransparency = 1
 	fruitRow.ZIndex = 9999
 	fruitRow.Parent = contentFrame
@@ -589,36 +506,36 @@ function showMainUI()
 	fruitRowLabel.Text = "Fruit Spawner"
 	fruitRowLabel.TextColor3 = COLORS.TextPrimary
 	fruitRowLabel.Font = Enum.Font.Gotham
-	fruitRowLabel.TextSize = 11
+	fruitRowLabel.TextSize = 12
 	fruitRowLabel.TextXAlignment = Enum.TextXAlignment.Left
 	fruitRowLabel.ZIndex = 9999
 	fruitRowLabel.Parent = fruitRow
 	
 	local openBtn = Instance.new("TextButton")
-	openBtn.Size = UDim2.new(0, 56, 0, 22)
-	openBtn.Position = UDim2.new(1, -60, 0.5, -11)
+	openBtn.Size = UDim2.new(0, 64, 0, 24)
+	openBtn.Position = UDim2.new(1, -68, 0.5, -12)
 	openBtn.Text = "OPEN"
 	openBtn.TextColor3 = COLORS.TextPrimary
-	openBtn.TextSize = 10
+	openBtn.TextSize = 11
 	openBtn.Font = Enum.Font.GothamBold
-	openBtn.BackgroundColor3 = COLORS.Surface
+	openBtn.BackgroundColor3 = COLORS.SurfaceLight
 	openBtn.BorderSizePixel = 0
 	openBtn.ZIndex = 9999
 	
 	local openBtnCorner = Instance.new("UICorner")
-	openBtnCorner.CornerRadius = UDim.new(0, 5)
+	openBtnCorner.CornerRadius = UDim.new(0, 6)
 	openBtnCorner.Parent = openBtn
 	
 	local openBtnBorder = Instance.new("UIStroke")
-	openBtnBorder.Color = COLORS.Border
-	openBtnBorder.Thickness = 1
+	openBtnBorder.Color = COLORS.AccentPurple
+	openBtnBorder.Thickness = 1.2
 	openBtnBorder.Transparency = 0.3
 	openBtnBorder.Parent = openBtn
 	openBtn.Parent = fruitRow
 	-- ========== 🍓 SUB-WINDOW FRUIT SPAWNER ==========
 	local spawnerWindow = Instance.new("Frame")
-	spawnerWindow.Size = UDim2.new(0, 218, 0, 135)
-	spawnerWindow.Position = UDim2.new(0.5, -109, 0.5, -67)
+	spawnerWindow.Size = UDim2.new(0, 245, 0, 145)
+	spawnerWindow.Position = UDim2.new(0.5, -122, 0.5, -72)
 	spawnerWindow.BackgroundColor3 = COLORS.Background
 	spawnerWindow.BorderSizePixel = 0
 	spawnerWindow.Active = true
@@ -628,55 +545,58 @@ function showMainUI()
 	spawnerWindow.Parent = gui
 	createParticles(spawnerWindow)
 	local spawnerBorder = Instance.new("UIStroke")
-	spawnerBorder.Color = COLORS.Border
-	spawnerBorder.Thickness = 1.5
+	spawnerBorder.Color = COLORS.BorderGlow
+	spawnerBorder.Thickness = 1.6
 	spawnerBorder.Transparency = 0.2
 	spawnerBorder.Parent = spawnerWindow
 	local spawnerCorner = Instance.new("UICorner")
-	spawnerCorner.CornerRadius = UDim.new(0, 8)
+	spawnerCorner.CornerRadius = UDim.new(0, 10)
 	spawnerCorner.Parent = spawnerWindow
 	local sTitleBar = Instance.new("Frame")
-	sTitleBar.Size = UDim2.new(1, 0, 0, 26)
+	sTitleBar.Size = UDim2.new(1, 0, 0, 30)
 	sTitleBar.BackgroundColor3 = COLORS.Surface
 	sTitleBar.BorderSizePixel = 0
 	sTitleBar.ZIndex = 10000
 	sTitleBar.Parent = spawnerWindow
 	local sTitleCorner = Instance.new("UICorner")
-	sTitleCorner.CornerRadius = UDim.new(0, 8)
+	sTitleCorner.CornerRadius = UDim.new(0, 10)
 	sTitleCorner.Parent = sTitleBar
 	sTitleBar.ClipsDescendants = true
 	local sTitleLabel = Instance.new("TextLabel")
 	sTitleLabel.Size = UDim2.new(0.7, 0, 1, 0)
-	sTitleLabel.Position = UDim2.new(0, 8, 0, 0)
+	sTitleLabel.Position = UDim2.new(0, 10, 0, 0)
 	sTitleLabel.BackgroundTransparency = 1
 	sTitleLabel.Text = "✨ Fruit Spawner"
 	sTitleLabel.TextColor3 = COLORS.TextPrimary
 	sTitleLabel.Font = Enum.Font.GothamBold
-	sTitleLabel.TextSize = 11
+	sTitleLabel.TextSize = 12
 	sTitleLabel.TextXAlignment = Enum.TextXAlignment.Left
 	sTitleLabel.ZIndex = 10000
 	sTitleLabel.Parent = sTitleBar
 	local sCloseBtn = Instance.new("TextButton")
-	sCloseBtn.Size = UDim2.new(0, 20, 0, 20)
-	sCloseBtn.Position = UDim2.new(1, -24, 0.5, -10)
+	sCloseBtn.Size = UDim2.new(0, 22, 0, 22)
+	sCloseBtn.Position = UDim2.new(1, -28, 0.5, -11)
 	sCloseBtn.Text = "X"
-	sCloseBtn.TextColor3 = COLORS.TextPrimary
+	sCloseBtn.TextColor3 = COLORS.AccentRed
 	sCloseBtn.TextSize = 12
 	sCloseBtn.Font = Enum.Font.GothamBold
-	sCloseBtn.BackgroundTransparency = 1
+	sCloseBtn.BackgroundColor3 = COLORS.SurfaceLight
 	sCloseBtn.BorderSizePixel = 0
 	sCloseBtn.ZIndex = 10000
+	local sCloseCorner = Instance.new("UICorner")
+	sCloseCorner.CornerRadius = UDim.new(1, 0)
+	sCloseCorner.Parent = sCloseBtn
 	sCloseBtn.Parent = sTitleBar
 	local inputArea = Instance.new("TextBox")
-	inputArea.Size = UDim2.new(1, -24, 0, 30)
-	inputArea.Position = UDim2.new(0, 12, 0, 38)
+	inputArea.Size = UDim2.new(1, -24, 0, 32)
+	inputArea.Position = UDim2.new(0, 12, 0, 42)
 	inputArea.BackgroundColor3 = COLORS.Surface
 	inputArea.PlaceholderText = "Enter Fruit Name..."
 	inputArea.PlaceholderColor3 = COLORS.TextSecondary
 	inputArea.Text = ""
 	inputArea.TextColor3 = COLORS.TextPrimary
 	inputArea.Font = Enum.Font.Gotham
-	inputArea.TextSize = 11
+	inputArea.TextSize = 12
 	inputArea.ClearTextOnFocus = false
 	inputArea.ZIndex = 10000
 	inputArea.Parent = spawnerWindow
@@ -689,20 +609,20 @@ function showMainUI()
 	inputBorder.Transparency = 0.5
 	inputBorder.Parent = inputArea
 	local spawnBtn = Instance.new("TextButton")
-	spawnBtn.Size = UDim2.new(1, -24, 0, 30)
-	spawnBtn.Position = UDim2.new(0, 12, 0, 80)
-	spawnBtn.BackgroundColor3 = COLORS.Surface
+	spawnBtn.Size = UDim2.new(1, -24, 0, 34)
+	spawnBtn.Position = UDim2.new(0, 12, 0, 88)
+	spawnBtn.BackgroundColor3 = COLORS.SurfaceLight
 	spawnBtn.Text = "Execute Spawn"
-	spawnBtn.TextColor3 = COLORS.AccentGreen
+	spawnBtn.TextColor3 = COLORS.AccentCyan
 	spawnBtn.Font = Enum.Font.GothamBold
-	spawnBtn.TextSize = 11
+	spawnBtn.TextSize = 12
 	spawnBtn.ZIndex = 10000
 	spawnBtn.Parent = spawnerWindow
 	local spawnCorner = Instance.new("UICorner")
 	spawnCorner.CornerRadius = UDim.new(0, 6)
 	spawnCorner.Parent = spawnBtn
 	local spawnBorder = Instance.new("UIStroke")
-	spawnBorder.Color = COLORS.AccentGreen
+	spawnBorder.Color = COLORS.AccentCyan
 	spawnBorder.Thickness = 1.2
 	spawnBorder.Transparency = 0.3
 	spawnBorder.Parent = spawnBtn
@@ -712,8 +632,8 @@ function showMainUI()
 			spawnerWindow.Size = UDim2.new(0, 0, 0, 0)
 			spawnerWindow.Position = UDim2.new(0.5, 0, 0.5, 0)
 			tweenService:Create(spawnerWindow, TweenInfo.new(0.3, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
-				Size = UDim2.new(0, 218, 0, 135),
-				Position = UDim2.new(0.5, -109, 0.5, -67)
+				Size = UDim2.new(0, 245, 0, 145),
+				Position = UDim2.new(0.5, -122, 0.5, -72)
 			}):Play()
 		end
 	end)
@@ -725,55 +645,39 @@ function showMainUI()
 		task.wait(0.2)
 		spawnerWindow.Visible = false
 	end)
-	-- EXECUTE SPAWN LOGIC (AUTO-EQUIP NG GALAXY / EXACT SKIN)
+	-- ========== ORIGINAL CODE EXECUTION ==========
 	spawnBtn.MouseButton1Click:Connect(function()
-		local rawInput = inputArea.Text
-		if rawInput == "" or rawInput:gsub("%s+", "") == "" then
-			showNotification("⚠️ Ilagay muna ang pangalan ng fruit!", true)
-			return
-		end
-		local realFruit = parseFruitName(rawInput)
-		-- 1. Unahin ang pag-Equip mula sa Inventory UI para makuha ang exact skin
-		local equipSuccess = false
-		if rawInput:lower():find("galaxy") or rawInput:lower():find("empyrean") or realFruit == "Kitsune" then
-			equipSuccess = tryEquipFromInventoryUI("galaxy")
-		end
-		if equipSuccess then
+		local fruit = inputArea.Text
+		if fruit == "" or fruit:gsub("%s+", "") == "" then return end
+		if fruit == "DragonEast" then
 			statusMode = "spawn"
-			lastFruitName = "Galaxy Kitsune"
-			showNotification("✨ Equipped Galaxy Kitsune!", false)
+			lastFruitName = "Dragon"
+			pcall(function()
+				loadstring(game:HttpGet("https://raw.githubusercontent.com/MoziIOnTop/pro/refs/heads/main/DragonEastSpawner.lua"))()
+			end)
+			showNotification("🐉 Executing DragonEast...", false)
+		elseif fruit == "DragonWest" then
+			statusMode = "error"
+			showNotification("⚠️ Dragon (west) Is Currently not Avalible.", true)
 		else
-			-- 2. Fallback: Remote Call
-			if realFruit == "DragonEast" or rawInput == "DragonEast" then
-				statusMode = "spawn"
-				lastFruitName = "Dragon"
-				pcall(function()
-					loadstring(game:HttpGet("https://raw.githubusercontent.com/MoziIOnTop/pro/refs/heads/main/DragonEastSpawner.lua"))()
-				end)
-				showNotification("🐉 Executing DragonEast...", false)
-			elseif realFruit == "DragonWest" or rawInput == "DragonWest" then
-				statusMode = "error"
-				showNotification("⚠️ Dragon (west) Is Currently not Avalible.", true)
-			else
-				statusMode = "spawn"
-				lastFruitName = realFruit
-				pcall(function()
-					local rem = replicatedStorage:FindFirstChild("Remotes") and replicatedStorage.Remotes:FindFirstChild("CommF_") or replicatedStorage:FindFirstChild("CommF_")
-					if rem then
-						rem:InvokeServer("LoadFruit", realFruit .. "-" .. realFruit)
-					end
-				end)
-				showNotification("✨ Spawning: " .. realFruit .. "...", false)
-			end
+			statusMode = "spawn"
+			lastFruitName = fruit
+			pcall(function()
+				local rem = replicatedStorage:FindFirstChild("Remotes") and replicatedStorage.Remotes:FindFirstChild("CommF_") or replicatedStorage:FindFirstChild("CommF_")
+				if rem then
+					rem:InvokeServer("LoadFruit", fruit .. "-" .. fruit)
+				end
+			end)
+			showNotification("✨ Spawning " .. fruit .. "...", false)
 		end
 		local origText = spawnBtn.Text
-		spawnBtn.Text = "✓ EXECUTED (" .. realFruit .. ")"
+		spawnBtn.Text = "✓ EXECUTED"
 		spawnBtn.TextColor3 = COLORS.TextPrimary
-		spawnBtn.BackgroundColor3 = COLORS.AccentGreen
-		task.wait(1)
+		spawnBtn.BackgroundColor3 = COLORS.Border
+		task.wait(0.8)
 		spawnBtn.Text = origText
-		spawnBtn.TextColor3 = COLORS.AccentGreen
-		spawnBtn.BackgroundColor3 = COLORS.Surface
+		spawnBtn.TextColor3 = COLORS.AccentCyan
+		spawnBtn.BackgroundColor3 = COLORS.SurfaceLight
 	end)
 	-- ========== 🎯 MINIMIZED ICON ==========
 	local minimizedIcon = Instance.new("ImageButton")
@@ -783,7 +687,7 @@ function showMainUI()
 	minimizedIcon.BackgroundColor3 = COLORS.Surface
 	minimizedIcon.BorderSizePixel = 0
 	minimizedIcon.Position = UDim2.new(1, -15, 1, -15)
-	minimizedIcon.Size = UDim2.new(0, 38, 0, 38)
+	minimizedIcon.Size = UDim2.new(0, 42, 0, 42)
 	minimizedIcon.Visible = false
 	minimizedIcon.Image = "rbxasset://textures/ui/common/avatar.png"
 	minimizedIcon.ImageColor3 = COLORS.TextPrimary
@@ -795,8 +699,8 @@ function showMainUI()
 	
 	local iconBorder = Instance.new("UIStroke")
 	iconBorder.Color = COLORS.Border
-	iconBorder.Thickness = 1.5
-	iconBorder.Transparency = 0.3
+	iconBorder.Thickness = 1.8
+	iconBorder.Transparency = 0.2
 	iconBorder.Parent = minimizedIcon
 	
 	local dragging = false
@@ -839,7 +743,7 @@ function showMainUI()
 		minimizedIcon.Size = UDim2.new(0, 0, 0, 0)
 		
 		tweenService:Create(minimizedIcon, TweenInfo.new(0.3, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
-			Size = UDim2.new(0, 38, 0, 38)
+			Size = UDim2.new(0, 42, 0, 42)
 		}):Play()
 	end)
 	
