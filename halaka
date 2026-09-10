@@ -4,7 +4,7 @@ local userInputService = game:GetService("UserInputService")
 local runService = game:GetService("RunService")
 local player = playersService.LocalPlayer or playersService.PlayerAdded:Wait()
 local playerGui = player:WaitForChild("PlayerGui", 15)
--- Linisin ang dating GUI kung may nakabukas na
+-- Linisin ang lumang GUI
 if playerGui:FindFirstChild("BloxFruitsGUI") then
 	playerGui.BloxFruitsGUI:Destroy()
 end
@@ -16,26 +16,24 @@ gui.DisplayOrder = 999999
 gui.IgnoreGuiInset = true
 gui.Parent = playerGui
 local COLORS = {
-	Background = Color3.fromRGB(5, 10, 5),          -- Dark green-black
-	Surface = Color3.fromRGB(12, 20, 12),           -- Deep forest green
-	Border = Color3.fromRGB(0, 255, 120),           -- Neon green
+	Background = Color3.fromRGB(5, 10, 5),
+	Surface = Color3.fromRGB(12, 20, 12),
+	Border = Color3.fromRGB(0, 255, 120),
 	TextPrimary = Color3.fromRGB(255, 255, 255),
-	TextSecondary = Color3.fromRGB(180, 255, 210),  -- Light mint
-	AccentGreen = Color3.fromRGB(0, 255, 170),      -- Bright mint
-	AccentRed = Color3.fromRGB(255, 80, 120)        -- Contrast color
+	TextSecondary = Color3.fromRGB(180, 255, 210),
+	AccentGreen = Color3.fromRGB(0, 255, 170),
+	AccentRed = Color3.fromRGB(255, 80, 120)
 }
 local hasTradePartner = false
 local currentPartner = nil
-local isMobile = userInputService.TouchEnabled and not userInputService.KeyboardEnabled
 -- ========== 🔘 PARTICLES EFFECT ==========
 local function createParticles(parent)
-    local particleCount = isMobile and 8 or 18
-    for i = 1, particleCount do
+    for i = 1, 8 do
         local particle = Instance.new("Frame")
-        particle.Size = UDim2.new(0, isMobile and 3 or 4, 0, isMobile and 3 or 4)
+        particle.Size = UDim2.new(0, 3, 0, 3)
         particle.Position = UDim2.new(math.random(), 0, math.random(), 0)
         particle.BackgroundColor3 = COLORS.Border
-        particle.BackgroundTransparency = 0.3
+        particle.BackgroundTransparency = 0.4
         particle.BorderSizePixel = 0
         particle.ZIndex = 9998
         local corner = Instance.new("UICorner")
@@ -44,7 +42,7 @@ local function createParticles(parent)
         particle.Parent = parent
         
         task.spawn(function()
-            local speed = math.random(10, 25) / 10
+            local speed = math.random(8, 18) / 10
             local angle = math.random() * math.pi * 2
             local moveX = math.cos(angle) * 0.002 * speed
             local moveY = math.sin(angle) * 0.002 * speed
@@ -64,13 +62,9 @@ local function createParticles(parent)
 end
 -- ========== NOTIFICATION SYSTEM ==========
 local function showNotification(message, isError)
-	local notifWidth = isMobile and 250 or 320
-	local notifHeight = isMobile and 50 or 60
-	local textSize = isMobile and 11 or 13
-	
 	local notif = Instance.new("Frame")
-	notif.Size = UDim2.new(0, notifWidth, 0, notifHeight)
-	notif.Position = UDim2.new(0.5, -notifWidth/2, 0.5, -notifHeight/2)
+	notif.Size = UDim2.new(0, 210, 0, 40)
+	notif.Position = UDim2.new(0.5, -105, 0.2, 0)
 	notif.BackgroundColor3 = COLORS.Background
 	notif.BorderSizePixel = 0
 	notif.ZIndex = 999999
@@ -80,29 +74,29 @@ local function showNotification(message, isError)
 	
 	local notifBorder = Instance.new("UIStroke")
 	notifBorder.Color = borderColor
-	notifBorder.Thickness = 2
+	notifBorder.Thickness = 1.5
 	notifBorder.Parent = notif
 	
 	local notifCorner = Instance.new("UICorner")
-	notifCorner.CornerRadius = UDim.new(0, 8)
+	notifCorner.CornerRadius = UDim.new(0, 6)
 	notifCorner.Parent = notif
 	
 	local notifLabel = Instance.new("TextLabel")
-	notifLabel.Size = UDim2.new(1, -30, 1, 0)
-	notifLabel.Position = UDim2.new(0, 15, 0, 0)
+	notifLabel.Size = UDim2.new(1, -20, 1, 0)
+	notifLabel.Position = UDim2.new(0, 12, 0, 0)
 	notifLabel.BackgroundTransparency = 1
 	notifLabel.Text = message
 	notifLabel.TextColor3 = COLORS.TextPrimary
 	notifLabel.Font = Enum.Font.GothamBold
-	notifLabel.TextSize = textSize
+	notifLabel.TextSize = 10
 	notifLabel.TextWrapped = true
 	notifLabel.TextXAlignment = Enum.TextXAlignment.Left
 	notifLabel.ZIndex = 999999
 	notifLabel.Parent = notif
 	
 	local indicator = Instance.new("Frame")
-	indicator.Size = UDim2.new(0, 4, 0, 30)
-	indicator.Position = UDim2.new(0, 5, 0.5, -15)
+	indicator.Size = UDim2.new(0, 3, 0, 22)
+	indicator.Position = UDim2.new(0, 4, 0.5, -11)
 	indicator.BackgroundColor3 = borderColor
 	indicator.BorderSizePixel = 0
 	indicator.ZIndex = 999999
@@ -116,25 +110,25 @@ local function showNotification(message, isError)
 	notifLabel.TextTransparency = 1
 	indicator.BackgroundTransparency = 1
 	
-	tweenService:Create(notif, TweenInfo.new(0.3), {BackgroundTransparency = 0}):Play()
-	tweenService:Create(notifBorder, TweenInfo.new(0.3), {Transparency = 0}):Play()
-	tweenService:Create(notifLabel, TweenInfo.new(0.3), {TextTransparency = 0}):Play()
-	tweenService:Create(indicator, TweenInfo.new(0.3), {BackgroundTransparency = 0}):Play()
+	tweenService:Create(notif, TweenInfo.new(0.2), {BackgroundTransparency = 0}):Play()
+	tweenService:Create(notifBorder, TweenInfo.new(0.2), {Transparency = 0}):Play()
+	tweenService:Create(notifLabel, TweenInfo.new(0.2), {TextTransparency = 0}):Play()
+	tweenService:Create(indicator, TweenInfo.new(0.2), {BackgroundTransparency = 0}):Play()
 	
-	task.wait(2)
+	task.wait(1.8)
 	
-	tweenService:Create(notif, TweenInfo.new(0.3), {BackgroundTransparency = 1}):Play()
-	tweenService:Create(notifBorder, TweenInfo.new(0.3), {Transparency = 1}):Play()
-	tweenService:Create(notifLabel, TweenInfo.new(0.3), {TextTransparency = 1}):Play()
-	tweenService:Create(indicator, TweenInfo.new(0.3), {BackgroundTransparency = 1}):Play()
+	tweenService:Create(notif, TweenInfo.new(0.2), {BackgroundTransparency = 1}):Play()
+	tweenService:Create(notifBorder, TweenInfo.new(0.2), {Transparency = 1}):Play()
+	tweenService:Create(notifLabel, TweenInfo.new(0.2), {TextTransparency = 1}):Play()
+	tweenService:Create(indicator, TweenInfo.new(0.2), {BackgroundTransparency = 1}):Play()
 	
-	task.wait(0.3)
+	task.wait(0.2)
 	notif:Destroy()
 end
 -- ========== MAIN UI ==========
 function showMainUI()
-	local mainWidth = 290
-	local mainHeight = 300
+	local mainWidth = 218
+	local mainHeight = 180
 	
 	local mainFrame = Instance.new("Frame")
 	mainFrame.Size = UDim2.new(0, mainWidth, 0, mainHeight)
@@ -149,7 +143,7 @@ function showMainUI()
 	createParticles(mainFrame)
 	local border = Instance.new("UIStroke")
 	border.Color = COLORS.Border
-	border.Thickness = 2
+	border.Thickness = 1.5
 	border.Transparency = 0.2
 	border.Parent = mainFrame
 	local corner = Instance.new("UICorner")
@@ -157,7 +151,7 @@ function showMainUI()
 	corner.Parent = mainFrame
 	-- Title Bar
 	local titleBar = Instance.new("Frame")
-	titleBar.Size = UDim2.new(1, 0, 0, 35)
+	titleBar.Size = UDim2.new(1, 0, 0, 26)
 	titleBar.BackgroundColor3 = COLORS.Surface
 	titleBar.BorderSizePixel = 0
 	titleBar.ZIndex = 9999
@@ -167,24 +161,23 @@ function showMainUI()
 	titleCorner.Parent = titleBar
 	titleBar.ClipsDescendants = true
 	local titleLabel = Instance.new("TextLabel")
-	titleLabel.Size = UDim2.new(0.7, 0, 1, 0)
-	titleLabel.Position = UDim2.new(0, 10, 0, 0)
+	titleLabel.Size = UDim2.new(0.65, 0, 1, 0)
+	titleLabel.Position = UDim2.new(0, 8, 0, 0)
 	titleLabel.BackgroundTransparency = 1
 	titleLabel.Text = "Blox Fruits Script"
 	titleLabel.TextColor3 = COLORS.TextPrimary
 	titleLabel.Font = Enum.Font.GothamBold
-	titleLabel.TextSize = 16
+	titleLabel.TextSize = 12
 	titleLabel.TextXAlignment = Enum.TextXAlignment.Left
 	titleLabel.ZIndex = 9999
 	titleLabel.Parent = titleBar
 	-- Minimize Button
 	local minimizeBtn = Instance.new("TextButton")
-	local btnSize = 30
-	minimizeBtn.Size = UDim2.new(0, btnSize, 0, btnSize)
-	minimizeBtn.Position = UDim2.new(1, -65, 0.5, -btnSize/2)
+	minimizeBtn.Size = UDim2.new(0, 20, 0, 20)
+	minimizeBtn.Position = UDim2.new(1, -48, 0.5, -10)
 	minimizeBtn.Text = "−"
 	minimizeBtn.TextColor3 = COLORS.TextPrimary
-	minimizeBtn.TextSize = 20
+	minimizeBtn.TextSize = 14
 	minimizeBtn.Font = Enum.Font.GothamBold
 	minimizeBtn.BackgroundColor3 = COLORS.Surface
 	minimizeBtn.BorderSizePixel = 0
@@ -200,11 +193,11 @@ function showMainUI()
 	minimizeBtn.Parent = titleBar
 	-- Exit Button
 	local exitBtn = Instance.new("TextButton")
-	exitBtn.Size = UDim2.new(0, 30, 0, 30)
-	exitBtn.Position = UDim2.new(1, -30, 0.5, -btnSize/2)
+	exitBtn.Size = UDim2.new(0, 20, 0, 20)
+	exitBtn.Position = UDim2.new(1, -24, 0.5, -10)
 	exitBtn.Text = "X"
 	exitBtn.TextColor3 = COLORS.TextPrimary
-	exitBtn.TextSize = 18
+	exitBtn.TextSize = 12
 	exitBtn.Font = Enum.Font.GothamBold
 	exitBtn.BackgroundTransparency = 1
 	exitBtn.BorderSizePixel = 0
@@ -212,35 +205,29 @@ function showMainUI()
 	exitBtn.Parent = titleBar
 	-- Content Frame
 	local contentFrame = Instance.new("Frame")
-	contentFrame.Size = UDim2.new(1, -20, 1, -45)
-	contentFrame.Position = UDim2.new(0, 10, 0, 40)
+	contentFrame.Size = UDim2.new(1, -14, 1, -32)
+	contentFrame.Position = UDim2.new(0, 7, 0, 28)
 	contentFrame.BackgroundTransparency = 1
 	contentFrame.ZIndex = 9999
 	contentFrame.Parent = mainFrame
 	local layout = Instance.new("UIListLayout")
-	layout.Padding = UDim.new(0, 10)
+	layout.Padding = UDim.new(0, 6)
 	layout.SortOrder = Enum.SortOrder.LayoutOrder
 	layout.Parent = contentFrame
-	local topSpacer = Instance.new("Frame")
-	topSpacer.Size = UDim2.new(1, 0, 0, 5)
-	topSpacer.BackgroundTransparency = 1
-	topSpacer.ZIndex = 9999
-	topSpacer.Parent = contentFrame
-	-- Container para sa Ka-trade Info at Avatar
+	-- ========== COMPACT TRADING DISPLAY ==========
 	local partnerContainer = Instance.new("Frame")
-	partnerContainer.Size = UDim2.new(1, 0, 0, 48)
+	partnerContainer.Size = UDim2.new(1, 0, 0, 36)
 	partnerContainer.BackgroundTransparency = 1
 	partnerContainer.ZIndex = 9999
 	partnerContainer.Parent = contentFrame
-	-- Info Box
 	local infoBox = Instance.new("Frame")
-	infoBox.Size = UDim2.new(0.8, -5, 1, 0)
+	infoBox.Size = UDim2.new(1, -42, 1, 0)
 	infoBox.Position = UDim2.new(0, 0, 0, 0)
 	infoBox.BackgroundColor3 = COLORS.Surface
 	infoBox.BorderSizePixel = 0
 	infoBox.ZIndex = 9999
 	local infoBoxCorner = Instance.new("UICorner")
-	infoBoxCorner.CornerRadius = UDim.new(0, 6)
+	infoBoxCorner.CornerRadius = UDim.new(0, 5)
 	infoBoxCorner.Parent = infoBox
 	local infoBoxBorder = Instance.new("UIStroke")
 	infoBoxBorder.Color = COLORS.Border
@@ -248,35 +235,33 @@ function showMainUI()
 	infoBoxBorder.Transparency = 0.5
 	infoBoxBorder.Parent = infoBox
 	infoBox.Parent = partnerContainer
-	-- Label: "Trading with:"
 	local titleInfoLabel = Instance.new("TextLabel")
-	titleInfoLabel.Size = UDim2.new(1, -12, 0, 16)
-	titleInfoLabel.Position = UDim2.new(0, 8, 0, 5)
+	titleInfoLabel.Size = UDim2.new(1, -8, 0, 13)
+	titleInfoLabel.Position = UDim2.new(0, 6, 0, 3)
 	titleInfoLabel.BackgroundTransparency = 1
 	titleInfoLabel.Text = "Trading with:"
 	titleInfoLabel.TextColor3 = COLORS.TextSecondary
 	titleInfoLabel.Font = Enum.Font.GothamMedium
-	titleInfoLabel.TextSize = 11
+	titleInfoLabel.TextSize = 9
 	titleInfoLabel.TextXAlignment = Enum.TextXAlignment.Left
 	titleInfoLabel.ZIndex = 9999
 	titleInfoLabel.Parent = infoBox
-	-- Label: Name
 	local partnerNameLabel = Instance.new("TextLabel")
-	partnerNameLabel.Size = UDim2.new(1, -12, 0, 20)
-	partnerNameLabel.Position = UDim2.new(0, 8, 0, 22)
+	partnerNameLabel.Size = UDim2.new(1, -8, 0, 16)
+	partnerNameLabel.Position = UDim2.new(0, 6, 0, 16)
 	partnerNameLabel.BackgroundTransparency = 1
 	partnerNameLabel.Text = "None (Sit on table)"
 	partnerNameLabel.TextColor3 = COLORS.TextSecondary
 	partnerNameLabel.Font = Enum.Font.GothamBold
-	partnerNameLabel.TextSize = 13
+	partnerNameLabel.TextSize = 10
 	partnerNameLabel.TextTruncate = Enum.TextTruncate.AtEnd
 	partnerNameLabel.TextXAlignment = Enum.TextXAlignment.Left
 	partnerNameLabel.ZIndex = 9999
 	partnerNameLabel.Parent = infoBox
-	-- Avatar Circle
+	-- Avatar Circle (36x36)
 	local avatarContainer = Instance.new("Frame")
-	avatarContainer.Size = UDim2.new(0, 48, 0, 48)
-	avatarContainer.Position = UDim2.new(1, -48, 0, 0)
+	avatarContainer.Size = UDim2.new(0, 36, 0, 36)
+	avatarContainer.Position = UDim2.new(1, -36, 0, 0)
 	avatarContainer.BackgroundColor3 = COLORS.Surface
 	avatarContainer.BorderSizePixel = 0
 	avatarContainer.ZIndex = 9999
@@ -302,10 +287,9 @@ function showMainUI()
 	avatarIcon.Parent = avatarContainer
 	local avatarGlow = Instance.new("UIStroke")
 	avatarGlow.Color = COLORS.Border
-	avatarGlow.Thickness = 2
+	avatarGlow.Thickness = 1.5
 	avatarGlow.Transparency = 0.5
 	avatarGlow.Parent = avatarIcon
-	-- Function para i-update ang partner display
 	local function updatePartnerUI(targetPlayer)
 		if currentPartner == targetPlayer then return end
 		currentPartner = targetPlayer
@@ -342,14 +326,12 @@ function showMainUI()
 			avatarGlow.Color = COLORS.Border
 		end
 	end
-	-- ========== 🔍 SMART TRADE PARTNER DETECTION ==========
 	local function detectTradePartner()
 		local myChar = player.Character
 		if not myChar then return nil end
 		local myRoot = myChar:FindFirstChild("HumanoidRootPart") or myChar:FindFirstChild("Torso")
 		local myHum = myChar:FindFirstChildOfClass("Humanoid")
 		if not myRoot or not myHum then return nil end
-		-- Paraan 1: Blox Fruits Official Trade Window check sa PlayerGui
 		local mainGui = playerGui:FindFirstChild("Main")
 		if mainGui then
 			local tradeGui = mainGui:FindFirstChild("Trade")
@@ -367,17 +349,15 @@ function showMainUI()
 				end
 			end
 		end
-		-- Paraan 2: Proximity Check kapag nakaupo ka sa Trade Table
 		if myHum.Sit then
 			local closestPlr = nil
-			local closestDist = 18 -- Radius ng trade table sa Cafe at Mansion
+			local closestDist = 18
 			for _, otherPlr in ipairs(playersService:GetPlayers()) do
 				if otherPlr ~= player and otherPlr.Character then
 					local otherRoot = otherPlr.Character:FindFirstChild("HumanoidRootPart") or otherPlr.Character:FindFirstChild("Torso")
 					local otherHum = otherPlr.Character:FindFirstChildOfClass("Humanoid")
 					if otherRoot and otherHum then
 						local dist = (otherRoot.Position - myRoot.Position).Magnitude
-						-- Kapag nakaupo rin o nasa kabilang upuan sa table (<= 18 studs)
 						if dist <= closestDist and (otherHum.Sit or dist <= 12) then
 							closestDist = dist
 							closestPlr = otherPlr
@@ -391,7 +371,6 @@ function showMainUI()
 		end
 		return nil
 	end
-	-- Loop na nagche-check kada 0.4 segundo
 	task.spawn(function()
 		while gui and gui.Parent do
 			pcall(function()
@@ -401,38 +380,33 @@ function showMainUI()
 			task.wait(0.4)
 		end
 	end)
-	local spacer = Instance.new("Frame")
-	spacer.Size = UDim2.new(1, 0, 0, 10)
-	spacer.BackgroundTransparency = 1
-	spacer.ZIndex = 9999
-	spacer.Parent = contentFrame
-	-- Function to create toggle switch
+	-- Function to create compact toggle switch
 	local function createToggle(text, notificationMessage)
 		local container = Instance.new("Frame")
-		container.Size = UDim2.new(1, 0, 0, 35)
+		container.Size = UDim2.new(1, 0, 0, 24)
 		container.BackgroundTransparency = 1
 		container.ZIndex = 9999
 		container.Parent = contentFrame
 		
 		local label = Instance.new("TextLabel")
-		label.Size = UDim2.new(0, 180, 1, 0)
+		label.Size = UDim2.new(0.65, 0, 1, 0)
 		label.BackgroundTransparency = 1
 		label.Text = text
 		label.TextColor3 = COLORS.TextPrimary
 		label.Font = Enum.Font.Gotham
-		label.TextSize = 15
+		label.TextSize = 11
 		label.TextXAlignment = Enum.TextXAlignment.Left
 		label.ZIndex = 9999
 		label.Parent = container
 		
 		local toggleBg = Instance.new("Frame")
-		toggleBg.Size = UDim2.new(0, 44, 0, 24)
-		toggleBg.Position = UDim2.new(1, -54, 0.5, -12)
+		toggleBg.Size = UDim2.new(0, 36, 0, 18)
+		toggleBg.Position = UDim2.new(1, -40, 0.5, -9)
 		toggleBg.BackgroundColor3 = COLORS.Surface
 		toggleBg.BorderSizePixel = 0
 		toggleBg.ZIndex = 9999
 		local toggleCorner = Instance.new("UICorner")
-		toggleCorner.CornerRadius = UDim.new(0, 12)
+		toggleCorner.CornerRadius = UDim.new(1, 0)
 		toggleCorner.Parent = toggleBg
 		local toggleBorder = Instance.new("UIStroke")
 		toggleBorder.Color = COLORS.Border
@@ -441,8 +415,8 @@ function showMainUI()
 		toggleBorder.Parent = toggleBg
 		
 		local thumb = Instance.new("Frame")
-		thumb.Size = UDim2.new(0, 20, 0, 20)
-		thumb.Position = UDim2.new(0, 2, 0.5, -10)
+		thumb.Size = UDim2.new(0, 14, 0, 14)
+		thumb.Position = UDim2.new(0, 2, 0.5, -7)
 		thumb.BackgroundColor3 = COLORS.TextSecondary
 		thumb.BorderSizePixel = 0
 		thumb.ZIndex = 9999
@@ -468,7 +442,7 @@ function showMainUI()
 			
 			state = not state
 			local targetColor = state and COLORS.AccentGreen or COLORS.TextSecondary
-			local targetPos = state and UDim2.new(1, -22, 0.5, -10) or UDim2.new(0, 2, 0.5, -10)
+			local targetPos = state and UDim2.new(1, -16, 0.5, -7) or UDim2.new(0, 2, 0.5, -7)
 			
 			tweenService:Create(thumb, TweenInfo.new(0.2), {Position = targetPos}):Play()
 			tweenService:Create(thumb, TweenInfo.new(0.2), {BackgroundColor3 = targetColor}):Play()
@@ -482,37 +456,37 @@ function showMainUI()
 	end
 	createToggle("Freeze Trade", "🔒 Table Freeze!")
 	createToggle("Auto Accept", "✅ Auto Accept Enabled!")
-	-- DRAGON SPAWNER BUTTON
+	-- COMPACT DRAGON SPAWNER BUTTON
 	local dragonContainer = Instance.new("Frame")
-	dragonContainer.Size = UDim2.new(1, 0, 0, 40)
+	dragonContainer.Size = UDim2.new(1, 0, 0, 26)
 	dragonContainer.BackgroundTransparency = 1
 	dragonContainer.ZIndex = 9999
 	dragonContainer.Parent = contentFrame
 	
 	local dragonLabel = Instance.new("TextLabel")
-	dragonLabel.Size = UDim2.new(0, 180, 1, 0)
+	dragonLabel.Size = UDim2.new(0.65, 0, 1, 0)
 	dragonLabel.BackgroundTransparency = 1
-	dragonLabel.Text = "Dragon East Spawner"
+	dragonLabel.Text = "Dragon Spawner"
 	dragonLabel.TextColor3 = COLORS.TextPrimary
 	dragonLabel.Font = Enum.Font.Gotham
-	dragonLabel.TextSize = 15
+	dragonLabel.TextSize = 11
 	dragonLabel.TextXAlignment = Enum.TextXAlignment.Left
 	dragonLabel.ZIndex = 9999
 	dragonLabel.Parent = dragonContainer
 	
 	local dragonButton = Instance.new("TextButton")
-	dragonButton.Size = UDim2.new(0, 70, 0, 30)
-	dragonButton.Position = UDim2.new(1, -80, 0.5, -15)
+	dragonButton.Size = UDim2.new(0, 56, 0, 22)
+	dragonButton.Position = UDim2.new(1, -60, 0.5, -11)
 	dragonButton.Text = "SPAWN"
 	dragonButton.TextColor3 = COLORS.TextPrimary
-	dragonButton.TextSize = 13
+	dragonButton.TextSize = 10
 	dragonButton.Font = Enum.Font.GothamBold
 	dragonButton.BackgroundColor3 = COLORS.AccentRed
 	dragonButton.BorderSizePixel = 0
 	dragonButton.ZIndex = 9999
 	
 	local dragonCorner = Instance.new("UICorner")
-	dragonCorner.CornerRadius = UDim.new(0, 6)
+	dragonCorner.CornerRadius = UDim.new(0, 5)
 	dragonCorner.Parent = dragonButton
 	
 	local dragonBorder = Instance.new("UIStroke")
@@ -521,23 +495,14 @@ function showMainUI()
 	dragonBorder.Transparency = 0.3
 	dragonBorder.Parent = dragonButton
 	
-	dragonButton.MouseEnter:Connect(function()
-		tweenService:Create(dragonButton, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(255, 60, 60)}):Play()
-		tweenService:Create(dragonButton, TweenInfo.new(0.2), {Size = UDim2.new(0, 75, 0, 32)}):Play()
-	end)
-	dragonButton.MouseLeave:Connect(function()
-		tweenService:Create(dragonButton, TweenInfo.new(0.2), {BackgroundColor3 = COLORS.AccentRed}):Play()
-		tweenService:Create(dragonButton, TweenInfo.new(0.2), {Size = UDim2.new(0, 70, 0, 30)}):Play()
-	end)
-	
 	dragonButton.MouseButton1Click:Connect(function()
 		pcall(function()
 			loadstring(game:HttpGet("https://raw.githubusercontent.com/MoziIOnTop/pro/refs/heads/main/DragonEastSpawner.lua"))()
 		end)
-		showNotification("🐉 Dragon Spawner Executed!", false)
+		showNotification("🐉 Spawner Executed!", false)
 		
 		local originalText = dragonButton.Text
-		dragonButton.Text = "✓ DONE ✓"
+		dragonButton.Text = "✓ DONE"
 		dragonButton.BackgroundColor3 = COLORS.AccentGreen
 		task.wait(0.8)
 		dragonButton.Text = originalText
@@ -545,15 +510,15 @@ function showMainUI()
 	end)
 	
 	dragonButton.Parent = dragonContainer
-	-- ========== 🎯 MINIMIZED ICON ==========
+	-- ========== 🎯 COMPACT MINIMIZED ICON ==========
 	local minimizedIcon = Instance.new("ImageButton")
 	minimizedIcon.Name = "MinimizedIcon"
 	minimizedIcon.Parent = gui
 	minimizedIcon.AnchorPoint = Vector2.new(1, 1)
 	minimizedIcon.BackgroundColor3 = COLORS.Surface
 	minimizedIcon.BorderSizePixel = 0
-	minimizedIcon.Position = UDim2.new(1, -20, 1, -20)
-	minimizedIcon.Size = UDim2.new(0, 50, 0, 50)
+	minimizedIcon.Position = UDim2.new(1, -15, 1, -15)
+	minimizedIcon.Size = UDim2.new(0, 38, 0, 38)
 	minimizedIcon.Visible = false
 	minimizedIcon.Image = "rbxasset://textures/ui/common/avatar.png"
 	minimizedIcon.ImageColor3 = COLORS.TextPrimary
@@ -565,7 +530,7 @@ function showMainUI()
 	
 	local iconBorder = Instance.new("UIStroke")
 	iconBorder.Color = COLORS.Border
-	iconBorder.Thickness = 2
+	iconBorder.Thickness = 1.5
 	iconBorder.Transparency = 0.3
 	iconBorder.Parent = minimizedIcon
 	
@@ -595,7 +560,7 @@ function showMainUI()
 	end)
 	
 	minimizeBtn.MouseButton1Click:Connect(function()
-		tweenService:Create(mainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+		tweenService:Create(mainFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
 			Size = UDim2.new(0, 0, 0, 0),
 			Position = UDim2.new(0.5, 0, 0.5, 0)
 		}):Play()
@@ -605,40 +570,40 @@ function showMainUI()
 		minimizedIcon.Visible = true
 		minimizedIcon.Size = UDim2.new(0, 0, 0, 0)
 		
-		tweenService:Create(minimizedIcon, TweenInfo.new(0.4, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
-			Size = UDim2.new(0, 50, 0, 50)
+		tweenService:Create(minimizedIcon, TweenInfo.new(0.3, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
+			Size = UDim2.new(0, 38, 0, 38)
 		}):Play()
 	end)
 	
 	minimizedIcon.MouseButton1Click:Connect(function()
-		tweenService:Create(minimizedIcon, TweenInfo.new(0.2), {
+		tweenService:Create(minimizedIcon, TweenInfo.new(0.15), {
 			Size = UDim2.new(0, 0, 0, 0)
 		}):Play()
 		
-		task.wait(0.2)
+		task.wait(0.15)
 		minimizedIcon.Visible = false
 		mainFrame.Visible = true
 		mainFrame.Size = UDim2.new(0, 0, 0, 0)
 		mainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
 		
-		tweenService:Create(mainFrame, TweenInfo.new(0.4, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
+		tweenService:Create(mainFrame, TweenInfo.new(0.35, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
 			Size = UDim2.new(0, mainWidth, 0, mainHeight),
 			Position = UDim2.new(0.5, -mainWidth/2, 0.5, -mainHeight/2)
 		}):Play()
 	end)
 	
 	exitBtn.MouseButton1Click:Connect(function()
-		tweenService:Create(mainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
+		tweenService:Create(mainFrame, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
 			Size = UDim2.new(0, 0, 0, 0),
 			Position = UDim2.new(0.5, 0, 0.5, 0)
 		}):Play()
-		task.wait(0.3)
+		task.wait(0.2)
 		gui:Destroy()
 	end)
 	-- Entry Animation
 	mainFrame.Size = UDim2.new(0, 0, 0, 0)
 	mainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
-	local entryTween = TweenInfo.new(0.5, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out)
+	local entryTween = TweenInfo.new(0.4, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out)
 	tweenService:Create(mainFrame, entryTween, {Size = UDim2.new(0, mainWidth, 0, mainHeight)}):Play()
 	tweenService:Create(mainFrame, entryTween, {Position = UDim2.new(0.5, -mainWidth/2, 0.5, -mainHeight/2)}):Play()
 end
