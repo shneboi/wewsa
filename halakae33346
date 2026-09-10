@@ -24,6 +24,7 @@ local COLORS = {
 	Background = Color3.fromRGB(8, 8, 10),           -- Deep Noir Black
 	Surface = Color3.fromRGB(16, 16, 20),            -- Dark Charcoal Glass
 	SurfaceLight = Color3.fromRGB(26, 26, 32),       -- Smooth Graphite
+	AvatarBg = Color3.fromRGB(255, 255, 255),        -- Pure White Avatar Background
 	GlowWhite = Color3.fromRGB(255, 255, 255),       -- Radiant Neon White
 	Border = Color3.fromRGB(255, 255, 255),          -- Pure White Border
 	BorderSoft = Color3.fromRGB(160, 160, 170),      -- Soft Glow
@@ -261,7 +262,7 @@ function showMainUI()
 	local corner = Instance.new("UICorner")
 	corner.CornerRadius = UDim.new(0, 10)
 	corner.Parent = mainFrame
-	-- Title Bar
+	-- Title Bar (Cleaned: No Rejoin, No Server Hop)
 	local titleBar = Instance.new("Frame")
 	titleBar.Size = UDim2.new(1, 0, 0, 30)
 	titleBar.BackgroundColor3 = COLORS.Surface
@@ -273,7 +274,7 @@ function showMainUI()
 	titleCorner.Parent = titleBar
 	titleBar.ClipsDescendants = true
 	local titleLabel = Instance.new("TextLabel")
-	titleLabel.Size = UDim2.new(0, 95, 1, 0)
+	titleLabel.Size = UDim2.new(0, 110, 1, 0)
 	titleLabel.Position = UDim2.new(0, 8, 0, 0)
 	titleLabel.BackgroundTransparency = 1
 	titleLabel.Text = "Blox Fruits Script"
@@ -286,7 +287,7 @@ function showMainUI()
 	-- Live FPS Counter
 	local fpsLabel = Instance.new("TextLabel")
 	fpsLabel.Size = UDim2.new(0, 42, 1, 0)
-	fpsLabel.Position = UDim2.new(1, -145, 0, 0)
+	fpsLabel.Position = UDim2.new(1, -78, 0, 0)
 	fpsLabel.BackgroundTransparency = 1
 	fpsLabel.Text = "60 FPS"
 	fpsLabel.TextColor3 = Color3.fromRGB(135, 135, 145)
@@ -306,65 +307,6 @@ function showMainUI()
 			frameCount = 0
 			lastFpsTime = now
 		end
-	end)
-	-- Rejoin Button (↻)
-	local rejoinBtn = Instance.new("TextButton")
-	rejoinBtn.Size = UDim2.new(0, 20, 0, 20)
-	rejoinBtn.Position = UDim2.new(1, -98, 0.5, -10)
-	rejoinBtn.Text = "↻"
-	rejoinBtn.TextColor3 = COLORS.TextPrimary
-	rejoinBtn.TextSize = 13
-	rejoinBtn.Font = Enum.Font.GothamBold
-	rejoinBtn.BackgroundColor3 = COLORS.SurfaceLight
-	rejoinBtn.BorderSizePixel = 0
-	rejoinBtn.ZIndex = 9999
-	local rjCorner = Instance.new("UICorner")
-	rjCorner.CornerRadius = UDim.new(1, 0)
-	rjCorner.Parent = rejoinBtn
-	rejoinBtn.Parent = titleBar
-	addClickEffect(rejoinBtn)
-	rejoinBtn.MouseButton1Click:Connect(function()
-		playUISound("rbxassetid://6895079853", 1, 0.5)
-		showNotification("Rejoining current server...", false)
-		task.wait(0.5)
-		pcall(function()
-			teleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, player)
-		end)
-	end)
-	-- Server Hop Button (⇄)
-	local hopBtn = Instance.new("TextButton")
-	hopBtn.Size = UDim2.new(0, 20, 0, 20)
-	hopBtn.Position = UDim2.new(1, -74, 0.5, -10)
-	hopBtn.Text = "⇄"
-	hopBtn.TextColor3 = COLORS.TextPrimary
-	hopBtn.TextSize = 12
-	hopBtn.Font = Enum.Font.GothamBold
-	hopBtn.BackgroundColor3 = COLORS.SurfaceLight
-	hopBtn.BorderSizePixel = 0
-	hopBtn.ZIndex = 9999
-	local hopCorner = Instance.new("UICorner")
-	hopCorner.CornerRadius = UDim.new(1, 0)
-	hopCorner.Parent = hopBtn
-	hopBtn.Parent = titleBar
-	addClickEffect(hopBtn)
-	hopBtn.MouseButton1Click:Connect(function()
-		playUISound("rbxassetid://6895079853", 1, 0.5)
-		showNotification("Searching for new server...", false)
-		task.spawn(function()
-			pcall(function()
-				local raw = game:HttpGet("https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Asc&limit=100")
-				local data = httpService:JSONDecode(raw)
-				if data and data.data then
-					for _, s in ipairs(data.data) do
-						if s.playing < s.maxPlayers and s.id ~= game.JobId then
-							teleportService:TeleportToPlaceInstance(game.PlaceId, s.id, player)
-							return
-						end
-					end
-				end
-				teleportService:Teleport(game.PlaceId, player)
-			end)
-		end)
 	end)
 	-- Minimize Button
 	local minimizeBtn = Instance.new("TextButton")
@@ -409,7 +351,7 @@ function showMainUI()
 	layout.Padding = UDim.new(0, 8)
 	layout.SortOrder = Enum.SortOrder.LayoutOrder
 	layout.Parent = contentFrame
-	-- Partner Display Container (Tap to Copy Username)
+	-- Partner Display Container (Cleaned: No Copy Hitbox)
 	local partnerContainer = Instance.new("Frame")
 	partnerContainer.Size = UDim2.new(1, 0, 0, 40)
 	partnerContainer.BackgroundTransparency = 1
@@ -434,7 +376,7 @@ function showMainUI()
 	titleInfoLabel.Size = UDim2.new(1, -10, 0, 14)
 	titleInfoLabel.Position = UDim2.new(0, 8, 0, 4)
 	titleInfoLabel.BackgroundTransparency = 1
-	titleInfoLabel.Text = "Trading with: (Tap to copy)"
+	titleInfoLabel.Text = "Trading with:"
 	titleInfoLabel.TextColor3 = COLORS.TextSecondary
 	titleInfoLabel.Font = Enum.Font.GothamMedium
 	titleInfoLabel.TextSize = 9
@@ -453,11 +395,11 @@ function showMainUI()
 	partnerNameLabel.TextXAlignment = Enum.TextXAlignment.Left
 	partnerNameLabel.ZIndex = 9999
 	partnerNameLabel.Parent = infoBox
-	-- Avatar Circle
+	-- Avatar Circle (WHITE BACKGROUND FOR HIGH VISIBILITY)
 	local avatarContainer = Instance.new("Frame")
 	avatarContainer.Size = UDim2.new(0, 40, 0, 40)
 	avatarContainer.Position = UDim2.new(1, -40, 0, 0)
-	avatarContainer.BackgroundColor3 = COLORS.Surface
+	avatarContainer.BackgroundColor3 = COLORS.AvatarBg -- PURE WHITE BACKGROUND
 	avatarContainer.BorderSizePixel = 0
 	avatarContainer.ZIndex = 9999
 	local avatarCorner = Instance.new("UICorner")
@@ -472,9 +414,9 @@ function showMainUI()
 	local avatarIcon = Instance.new("ImageLabel")
 	avatarIcon.Size = UDim2.new(1, -4, 1, -4)
 	avatarIcon.Position = UDim2.new(0, 2, 0, 2)
-	avatarIcon.BackgroundColor3 = COLORS.Background
+	avatarIcon.BackgroundColor3 = COLORS.AvatarBg -- PURE WHITE
 	avatarIcon.Image = "rbxasset://textures/ui/common/avatar.png"
-	avatarIcon.ImageColor3 = COLORS.TextPrimary
+	avatarIcon.ImageColor3 = Color3.fromRGB(255, 255, 255)
 	avatarIcon.ZIndex = 9999
 	local iconCorner = Instance.new("UICorner")
 	iconCorner.CornerRadius = UDim.new(1, 0)
@@ -485,25 +427,6 @@ function showMainUI()
 	avatarGlow.Thickness = 1.5
 	avatarGlow.Transparency = 0.3
 	avatarGlow.Parent = avatarIcon
-	-- One-Tap Copy Username Event
-	local function triggerCopyUsername()
-		if currentPartner then
-			pcall(function()
-				if setclipboard then
-					setclipboard(currentPartner.Name)
-				end
-			end)
-			playUISound("rbxassetid://6895079853", 1.2, 0.5)
-			showNotification("Copied @" .. currentPartner.Name .. " to clipboard!", false)
-		end
-	end
-	local copyHitbox = Instance.new("TextButton")
-	copyHitbox.Size = UDim2.new(1, 0, 1, 0)
-	copyHitbox.BackgroundTransparency = 1
-	copyHitbox.Text = ""
-	copyHitbox.ZIndex = 10000
-	copyHitbox.Parent = partnerContainer
-	copyHitbox.MouseButton1Click:Connect(triggerCopyUsername)
 	-- Minimized floating icon & badge reference
 	local minimizedIcon = nil
 	local notifBadge = nil
@@ -541,7 +464,7 @@ function showMainUI()
 					end
 				end
 			end)
-			playUISound("rbxassetid://6026987140", 1.2, 0.5) -- Soft chime on join!
+			playUISound("rbxassetid://6026987140", 1.2, 0.5)
 			showNotification("Trade Partner Detected: " .. targetPlayer.DisplayName, false)
 			if notifBadge then notifBadge.Visible = true end
 		else
