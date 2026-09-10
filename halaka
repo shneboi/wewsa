@@ -63,7 +63,7 @@ end
 -- ========== NOTIFICATION SYSTEM ==========
 local function showNotification(message, isError)
 	local notif = Instance.new("Frame")
-	notif.Size = UDim2.new(0, 215, 0, 40)
+	notif.Size = UDim2.new(0, 215, 0, 38)
 	notif.Position = UDim2.new(0.5, -107, 0.15, 0)
 	notif.BackgroundColor3 = COLORS.Background
 	notif.BorderSizePixel = 0
@@ -95,8 +95,8 @@ local function showNotification(message, isError)
 	notifLabel.Parent = notif
 	
 	local indicator = Instance.new("Frame")
-	indicator.Size = UDim2.new(0, 3, 0, 22)
-	indicator.Position = UDim2.new(0, 4, 0.5, -11)
+	indicator.Size = UDim2.new(0, 3, 0, 20)
+	indicator.Position = UDim2.new(0, 4, 0.5, -10)
 	indicator.BackgroundColor3 = borderColor
 	indicator.BorderSizePixel = 0
 	indicator.ZIndex = 999999
@@ -125,10 +125,84 @@ local function showNotification(message, isError)
 	task.wait(0.2)
 	notif:Destroy()
 end
+-- ========== 🐉 BUILT-IN VISUAL DRAGON FRUIT SPAWNER ==========
+local function spawnVisualDragonFruit()
+	local character = player.Character
+	local backpack = player:FindFirstChild("Backpack")
+	if not character or not backpack then
+		return false, "Character not loaded"
+	end
+	-- Alisin ang lumang visual tool kung meron na
+	local oldTool = backpack:FindFirstChild("Dragon-Dragon") or character:FindFirstChild("Dragon-Dragon")
+	if oldTool then
+		oldTool:Destroy()
+	end
+	local fruitTool = Instance.new("Tool")
+	fruitTool.Name = "Dragon-Dragon"
+	fruitTool.RequiresHandle = true
+	fruitTool.CanBeDropped = false
+	-- Subukang hanapin ang totoong fruit mesh sa ReplicatedStorage
+	local replicatedStorage = game:GetService("ReplicatedStorage")
+	local sourceHandle = nil
+	for _, item in ipairs(replicatedStorage:GetDescendants()) do
+		if item:IsA("BasePart") and item.Name:lower():find("dragon") and item.Parent:IsA("Model") then
+			sourceHandle = item:Clone()
+			break
+		end
+	end
+	local handle
+	if sourceHandle then
+		handle = sourceHandle
+		handle.Name = "Handle"
+		handle.CanCollide = false
+	else
+		-- Gumawa ng Mythical Dragon Fruit visual model
+		handle = Instance.new("Part")
+		handle.Name = "Handle"
+		handle.Size = Vector3.new(1.3, 1.4, 1.3)
+		handle.Color = Color3.fromRGB(180, 20, 50)
+		handle.Material = Enum.Material.Neon
+		handle.CanCollide = false
+		local mesh = Instance.new("SpecialMesh")
+		mesh.MeshType = Enum.MeshType.Sphere
+		mesh.Scale = Vector3.new(1.1, 1.2, 1.1)
+		mesh.Parent = handle
+		-- Mythical glowing aura particles
+		local fireParticles = Instance.new("ParticleEmitter")
+		fireParticles.Color = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 60, 60)),
+			ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 140, 20)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(100, 0, 255))
+		})
+		fireParticles.Size = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 0.4),
+			NumberSequenceKeypoint.new(1, 0.05)
+		})
+		fireParticles.Transparency = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 0.2),
+			NumberSequenceKeypoint.new(1, 1)
+		})
+		fireParticles.Lifetime = NumberRange.new(0.4, 0.8)
+		fireParticles.Rate = 35
+		fireParticles.Speed = NumberRange.new(1, 2)
+		fireParticles.Parent = handle
+	end
+	handle.Parent = fruitTool
+	fruitTool.Parent = backpack
+	
+	-- I-equip agad sa kamay
+	local humanoid = character:FindFirstChildOfClass("Humanoid")
+	if humanoid then
+		task.delay(0.1, function()
+			humanoid:EquipTool(fruitTool)
+		end)
+	end
+	return true
+end
 -- ========== MAIN UI ==========
 function showMainUI()
 	local mainWidth = 218
-	local mainHeight = 180
+	local mainHeight = 170  -- Tamang-tama sa height ng mga laman
 	
 	local mainFrame = Instance.new("Frame")
 	mainFrame.Size = UDim2.new(0, mainWidth, 0, mainHeight)
@@ -203,15 +277,15 @@ function showMainUI()
 	exitBtn.BorderSizePixel = 0
 	exitBtn.ZIndex = 9999
 	exitBtn.Parent = titleBar
-	-- Content Frame
+	-- Content Frame (May tamang 6px margin mula sa title bar)
 	local contentFrame = Instance.new("Frame")
-	contentFrame.Size = UDim2.new(1, -14, 1, -32)
-	contentFrame.Position = UDim2.new(0, 7, 0, 28)
+	contentFrame.Size = UDim2.new(1, -16, 0, 134)
+	contentFrame.Position = UDim2.new(0, 8, 0, 32)
 	contentFrame.BackgroundTransparency = 1
 	contentFrame.ZIndex = 9999
 	contentFrame.Parent = mainFrame
 	local layout = Instance.new("UIListLayout")
-	layout.Padding = UDim.new(0, 6)
+	layout.Padding = UDim.new(0, 7)
 	layout.SortOrder = Enum.SortOrder.LayoutOrder
 	layout.Parent = contentFrame
 	-- ========== COMPACT TRADING DISPLAY ==========
@@ -258,7 +332,7 @@ function showMainUI()
 	partnerNameLabel.TextXAlignment = Enum.TextXAlignment.Left
 	partnerNameLabel.ZIndex = 9999
 	partnerNameLabel.Parent = infoBox
-	-- Avatar Circle (36x36)
+	-- Avatar Circle
 	local avatarContainer = Instance.new("Frame")
 	avatarContainer.Size = UDim2.new(0, 36, 0, 36)
 	avatarContainer.Position = UDim2.new(1, -36, 0, 0)
@@ -456,7 +530,7 @@ function showMainUI()
 	end
 	createToggle("Freeze Trade", "🔒 Table Freeze!")
 	createToggle("Auto Accept", "✅ Auto Accept Enabled!")
-	-- ========== DRAGON SPAWNER BUTTON WITH ERROR HANDLER ==========
+	-- ========== DRAGON SPAWNER (BUILT-IN VISUAL FRUIT) ==========
 	local dragonContainer = Instance.new("Frame")
 	dragonContainer.Size = UDim2.new(1, 0, 0, 26)
 	dragonContainer.BackgroundTransparency = 1
@@ -496,29 +570,21 @@ function showMainUI()
 	dragonBorder.Parent = dragonButton
 	
 	dragonButton.MouseButton1Click:Connect(function()
-		local success, err = pcall(function()
-			local scriptCode = game:HttpGet("https://raw.githubusercontent.com/MoziIOnTop/pro/refs/heads/main/DragonEastSpawner.lua")
-			local runFunc, syntaxErr = loadstring(scriptCode)
-			if not runFunc then
-				error(syntaxErr or "Failed to parse script")
-			end
-			runFunc()
-		end)
-		if not success then
-			warn("[Dragon Spawner Error]:", err)
-			showNotification("❌ Spawner Error: Patched or Outdated ang script!", true)
-			dragonButton.Text = "FAILED"
-			dragonButton.BackgroundColor3 = Color3.fromRGB(180, 40, 40)
-			task.wait(1.2)
+		local ok, err = pcall(spawnVisualDragonFruit)
+		
+		if ok then
+			showNotification("🐉 Visual Dragon Fruit Spawned!", false)
+			dragonButton.Text = "✓ DONE"
+			dragonButton.BackgroundColor3 = COLORS.AccentGreen
+			task.wait(1)
 			dragonButton.Text = "SPAWN"
 			dragonButton.BackgroundColor3 = COLORS.AccentRed
 		else
-			showNotification("🐉 Spawner Executed!", false)
-			dragonButton.Text = "✓ DONE"
-			dragonButton.BackgroundColor3 = COLORS.AccentGreen
-			task.wait(0.8)
+			warn("[Spawn Error]:", err)
+			showNotification("❌ Failed to spawn fruit!", true)
+			dragonButton.Text = "ERROR"
+			task.wait(1)
 			dragonButton.Text = "SPAWN"
-			dragonButton.BackgroundColor3 = COLORS.AccentRed
 		end
 	end)
 	
