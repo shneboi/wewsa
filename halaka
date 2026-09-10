@@ -262,7 +262,7 @@ function showMainUI()
 	local corner = Instance.new("UICorner")
 	corner.CornerRadius = UDim.new(0, 10)
 	corner.Parent = mainFrame
-	-- Title Bar (Cleaned: No Rejoin, No Server Hop)
+	-- Title Bar
 	local titleBar = Instance.new("Frame")
 	titleBar.Size = UDim2.new(1, 0, 0, 30)
 	titleBar.BackgroundColor3 = COLORS.Surface
@@ -274,7 +274,7 @@ function showMainUI()
 	titleCorner.Parent = titleBar
 	titleBar.ClipsDescendants = true
 	local titleLabel = Instance.new("TextLabel")
-	titleLabel.Size = UDim2.new(0, 110, 1, 0)
+	titleLabel.Size = UDim2.new(0, 105, 1, 0)
 	titleLabel.Position = UDim2.new(0, 8, 0, 0)
 	titleLabel.BackgroundTransparency = 1
 	titleLabel.Text = "Blox Fruits Script"
@@ -284,10 +284,10 @@ function showMainUI()
 	titleLabel.TextXAlignment = Enum.TextXAlignment.Left
 	titleLabel.ZIndex = 9999
 	titleLabel.Parent = titleBar
-	-- Live FPS Counter
+	-- Live FPS Counter (Adjusted: Walang overlap sa Minimize Button)
 	local fpsLabel = Instance.new("TextLabel")
-	fpsLabel.Size = UDim2.new(0, 42, 1, 0)
-	fpsLabel.Position = UDim2.new(1, -78, 0, 0)
+	fpsLabel.Size = UDim2.new(0, 48, 1, 0)
+	fpsLabel.Position = UDim2.new(1, -104, 0, 0)
 	fpsLabel.BackgroundTransparency = 1
 	fpsLabel.Text = "60 FPS"
 	fpsLabel.TextColor3 = Color3.fromRGB(135, 135, 145)
@@ -399,7 +399,7 @@ function showMainUI()
 	local avatarContainer = Instance.new("Frame")
 	avatarContainer.Size = UDim2.new(0, 40, 0, 40)
 	avatarContainer.Position = UDim2.new(1, -40, 0, 0)
-	avatarContainer.BackgroundColor3 = COLORS.AvatarBg -- PURE WHITE BACKGROUND
+	avatarContainer.BackgroundColor3 = COLORS.AvatarBg -- PURE WHITE
 	avatarContainer.BorderSizePixel = 0
 	avatarContainer.ZIndex = 9999
 	local avatarCorner = Instance.new("UICorner")
@@ -458,7 +458,6 @@ function showMainUI()
 					avatarIcon.Image = content
 					avatarGlow.Color = COLORS.GlowWhite
 					avatarGlow.Transparency = 0.1
-					-- Update dynamic minimized icon to partner's face!
 					if minimizedIcon then
 						minimizedIcon.Image = content
 					end
@@ -475,7 +474,6 @@ function showMainUI()
 			infoBoxBorder.Transparency = 0.5
 			avatarIcon.Image = "rbxasset://textures/ui/common/avatar.png"
 			avatarGlow.Color = COLORS.BorderSoft
-			-- Revert dynamic minimized icon to local player's face
 			if minimizedIcon then
 				minimizedIcon.Image = myThumbnail or "rbxasset://textures/ui/common/avatar.png"
 			end
