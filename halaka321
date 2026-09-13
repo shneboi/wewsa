@@ -21,17 +21,19 @@ gui.IgnoreGuiInset = true
 gui.Parent = playerGui
 -- ========== 🖤 PURE BLACK & RADIANT WHITE THEME ==========
 local COLORS = {
-	Background = Color3.fromRGB(8, 8, 10),           -- Deep Noir Black
-	Surface = Color3.fromRGB(16, 16, 20),            -- Dark Charcoal Glass
-	SurfaceLight = Color3.fromRGB(26, 26, 32),       -- Smooth Graphite
-	AvatarBg = Color3.fromRGB(255, 255, 255),        -- Pure White Avatar Background
-	GlowWhite = Color3.fromRGB(255, 255, 255),       -- Radiant Neon White
-	Border = Color3.fromRGB(255, 255, 255),          -- Pure White Border
-	BorderSoft = Color3.fromRGB(160, 160, 170),      -- Soft Glow
-	TextPrimary = Color3.fromRGB(255, 255, 255),     -- Pure White
-	TextSecondary = Color3.fromRGB(175, 175, 185),   -- Light Silver
-	AccentGreen = Color3.fromRGB(0, 255, 150),       -- Clean Mint Indicator
-	AccentRed = Color3.fromRGB(255, 75, 75)          -- Close / Error Red
+	Background = Color3.fromRGB(8, 8, 10),
+	Surface = Color3.fromRGB(16, 16, 20),
+	SurfaceLight = Color3.fromRGB(26, 26, 32),
+	AvatarBg = Color3.fromRGB(255, 255, 255),
+
+	GlowWhite = Color3.fromRGB(255, 75, 75), -- RED MOVING GLOW
+	Border = Color3.fromRGB(255, 75, 75),    -- RED BORDER
+
+	BorderSoft = Color3.fromRGB(160, 160, 170),
+	TextPrimary = Color3.fromRGB(255, 255, 255),
+	TextSecondary = Color3.fromRGB(175, 175, 185),
+	AccentGreen = Color3.fromRGB(0, 255, 150),
+	AccentRed = Color3.fromRGB(255, 75, 75)
 }
 local hasTradePartner = false
 local currentPartner = nil
