@@ -92,77 +92,55 @@ local function createEmberParticles(parent)
 	end
 end
 
--- ========== 🕸️ CORNER COBWEBS (GAMIT ANG IYONG DECAL: 71256475259294) ==========
+-- ========== 🕸️ CORNER COBWEBS (GAMIT ANG RBXTHUMB PARA GUMANA ANG DECAL) ==========
 local function addCobwebs(parent)
-	local DECAL_ID = "rbxassetid://71256475259294"
+	-- rbxthumb protocol para automatic ma-convert ang Decal ID sa Image format
+	local DECAL_URL = "rbxthumb://type=Asset&id=71256475259294&w=420&h=420"
 
-	-- Top-Right Corner Web (Taas-kanan)
+	-- Top-Right Corner Web (Sakto ang 90-degree angle sa taas-kanan)
 	local trWeb = Instance.new("ImageLabel")
 	trWeb.Name = "CobwebTR"
 	trWeb.Size = UDim2.new(0, 85, 0, 85)
 	trWeb.Position = UDim2.new(1, -85, 0, 0)
 	trWeb.BackgroundTransparency = 1
-	trWeb.Image = DECAL_ID
+	trWeb.Image = DECAL_URL
 	trWeb.ImageColor3 = Color3.fromRGB(255, 255, 255)
-	trWeb.ImageTransparency = 0.25
 	trWeb.ZIndex = 9999
 	trWeb.Parent = parent
 
-	-- Nakabiting Gagamba sa Top-Right Web
-	local spiderLine = Instance.new("Frame")
-	spiderLine.Size = UDim2.new(0, 1, 0, 26)
-	spiderLine.Position = UDim2.new(1, -48, 0, 0)
-	spiderLine.BackgroundColor3 = Color3.fromRGB(200, 160, 245)
-	spiderLine.BackgroundTransparency = 0.4
-	spiderLine.BorderSizePixel = 0
-	spiderLine.ZIndex = 9999
-	spiderLine.Parent = parent
-
-	local spider = Instance.new("TextLabel")
-	spider.Size = UDim2.new(0, 14, 0, 14)
-	spider.Position = UDim2.new(0, -6, 1, -2)
-	spider.BackgroundTransparency = 1
-	spider.Text = "🕷️"
-	spider.TextSize = 12
-	spider.ZIndex = 10000
-	spider.Parent = spiderLine
-
-	-- Top-Left Corner Web (Taas-kaliwa)
+	-- Top-Left Corner Web (Naka-rotate para sa kaliwa)
 	local tlWeb = Instance.new("ImageLabel")
 	tlWeb.Name = "CobwebTL"
-	tlWeb.Size = UDim2.new(0, 70, 0, 70)
+	tlWeb.Size = UDim2.new(0, 85, 0, 85)
 	tlWeb.Position = UDim2.new(0, 0, 0, 0)
 	tlWeb.BackgroundTransparency = 1
-	tlWeb.Image = DECAL_ID
+	tlWeb.Image = DECAL_URL
 	tlWeb.Rotation = 270
 	tlWeb.ImageColor3 = Color3.fromRGB(255, 255, 255)
-	tlWeb.ImageTransparency = 0.35
 	tlWeb.ZIndex = 9999
 	tlWeb.Parent = parent
 
-	-- Bottom-Left Corner Web (Baba-kaliwa)
+	-- Bottom-Left Corner Web
 	local blWeb = Instance.new("ImageLabel")
 	blWeb.Name = "CobwebBL"
-	blWeb.Size = UDim2.new(0, 60, 0, 60)
-	blWeb.Position = UDim2.new(0, 0, 1, -60)
+	blWeb.Size = UDim2.new(0, 75, 0, 75)
+	blWeb.Position = UDim2.new(0, 0, 1, -75)
 	blWeb.BackgroundTransparency = 1
-	blWeb.Image = DECAL_ID
+	blWeb.Image = DECAL_URL
 	blWeb.Rotation = 180
 	blWeb.ImageColor3 = Color3.fromRGB(255, 255, 255)
-	blWeb.ImageTransparency = 0.45
 	blWeb.ZIndex = 9999
 	blWeb.Parent = parent
 
-	-- Bottom-Right Corner Web (Baba-kanan)
+	-- Bottom-Right Corner Web
 	local brWeb = Instance.new("ImageLabel")
 	brWeb.Name = "CobwebBR"
-	brWeb.Size = UDim2.new(0, 55, 0, 55)
-	brWeb.Position = UDim2.new(1, -55, 1, -55)
+	brWeb.Size = UDim2.new(0, 75, 0, 75)
+	brWeb.Position = UDim2.new(1, -75, 1, -75)
 	brWeb.BackgroundTransparency = 1
-	brWeb.Image = DECAL_ID
+	brWeb.Image = DECAL_URL
 	brWeb.Rotation = 90
 	brWeb.ImageColor3 = Color3.fromRGB(255, 255, 255)
-	brWeb.ImageTransparency = 0.5
 	brWeb.ZIndex = 9999
 	brWeb.Parent = parent
 end
@@ -331,7 +309,7 @@ function showMainUI()
 	mainFrame.Parent = gui
 	
 	createEmberParticles(mainFrame)
-	addCobwebs(mainFrame) -- 🕸️ Gamit ang iyong Custom Decal
+	addCobwebs(mainFrame) -- 🕸️ Custom Decal Web Corners
 	
 	local border = Instance.new("UIStroke")
 	border.Color = COLORS.BorderGlow
