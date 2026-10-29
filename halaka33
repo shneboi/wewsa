@@ -21,6 +21,10 @@ gui.DisplayOrder = 999999
 gui.IgnoreGuiInset = true
 gui.Parent = playerGui
 
+-- ========== 🎃 ASSETS & DECALS (RBXTHUMB CONVERTED) ==========
+local PUMPKIN_DECAL_URL = "rbxthumb://type=Asset&id=83452810662216&w=420&h=420"
+local COBWEB_DECAL_URL  = "rbxthumb://type=Asset&id=107585713845350&w=420&h=420"
+
 -- ========== 🎃 HALLOWEEN / HAUNTED THEME PALETTE ==========
 local COLORS = {
 	Background = Color3.fromRGB(14, 7, 22),         -- Deep gothic obsidian purple
@@ -92,29 +96,26 @@ local function createEmberParticles(parent)
 	end
 end
 
--- ========== 🕸️ CORNER COBWEBS (GAMIT ANG RBXTHUMB PARA GUMANA ANG DECAL) ==========
+-- ========== 🕸️ CORNER COBWEBS (DECAL: 107585713845350) ==========
 local function addCobwebs(parent)
-	-- rbxthumb protocol para automatic ma-convert ang Decal ID sa Image format
-	local DECAL_URL = "rbxthumb://type=Asset&id=71256475259294&w=420&h=420"
-
-	-- Top-Right Corner Web (Sakto ang 90-degree angle sa taas-kanan)
+	-- Top-Right Corner Web
 	local trWeb = Instance.new("ImageLabel")
 	trWeb.Name = "CobwebTR"
 	trWeb.Size = UDim2.new(0, 85, 0, 85)
 	trWeb.Position = UDim2.new(1, -85, 0, 0)
 	trWeb.BackgroundTransparency = 1
-	trWeb.Image = DECAL_URL
+	trWeb.Image = COBWEB_DECAL_URL
 	trWeb.ImageColor3 = Color3.fromRGB(255, 255, 255)
 	trWeb.ZIndex = 9999
 	trWeb.Parent = parent
 
-	-- Top-Left Corner Web (Naka-rotate para sa kaliwa)
+	-- Top-Left Corner Web
 	local tlWeb = Instance.new("ImageLabel")
 	tlWeb.Name = "CobwebTL"
 	tlWeb.Size = UDim2.new(0, 85, 0, 85)
 	tlWeb.Position = UDim2.new(0, 0, 0, 0)
 	tlWeb.BackgroundTransparency = 1
-	tlWeb.Image = DECAL_URL
+	tlWeb.Image = COBWEB_DECAL_URL
 	tlWeb.Rotation = 270
 	tlWeb.ImageColor3 = Color3.fromRGB(255, 255, 255)
 	tlWeb.ZIndex = 9999
@@ -126,7 +127,7 @@ local function addCobwebs(parent)
 	blWeb.Size = UDim2.new(0, 75, 0, 75)
 	blWeb.Position = UDim2.new(0, 0, 1, -75)
 	blWeb.BackgroundTransparency = 1
-	blWeb.Image = DECAL_URL
+	blWeb.Image = COBWEB_DECAL_URL
 	blWeb.Rotation = 180
 	blWeb.ImageColor3 = Color3.fromRGB(255, 255, 255)
 	blWeb.ZIndex = 9999
@@ -138,7 +139,7 @@ local function addCobwebs(parent)
 	brWeb.Size = UDim2.new(0, 75, 0, 75)
 	brWeb.Position = UDim2.new(1, -75, 1, -75)
 	brWeb.BackgroundTransparency = 1
-	brWeb.Image = DECAL_URL
+	brWeb.Image = COBWEB_DECAL_URL
 	brWeb.Rotation = 90
 	brWeb.ImageColor3 = Color3.fromRGB(255, 255, 255)
 	brWeb.ZIndex = 9999
@@ -309,7 +310,7 @@ function showMainUI()
 	mainFrame.Parent = gui
 	
 	createEmberParticles(mainFrame)
-	addCobwebs(mainFrame) -- 🕸️ Custom Decal Web Corners
+	addCobwebs(mainFrame) -- 🕸️ Sapot corners
 	
 	local border = Instance.new("UIStroke")
 	border.Color = COLORS.BorderGlow
@@ -334,20 +335,19 @@ function showMainUI()
 	titleCorner.Parent = titleBar
 	titleBar.ClipsDescendants = true
 	
-	-- Jack-o'-lantern Icon
-	local pumpkinIcon = Instance.new("TextLabel")
+	-- 🎃 Custom Decal Pumpkin Icon (Header)
+	local pumpkinIcon = Instance.new("ImageLabel")
 	pumpkinIcon.Size = UDim2.new(0, 26, 0, 26)
 	pumpkinIcon.Position = UDim2.new(0, 8, 0.5, -13)
 	pumpkinIcon.BackgroundTransparency = 1
-	pumpkinIcon.Text = "🎃"
-	pumpkinIcon.TextSize = 20
+	pumpkinIcon.Image = PUMPKIN_DECAL_URL
 	pumpkinIcon.ZIndex = 9999
 	pumpkinIcon.Parent = titleBar
 	
 	-- Title Text
 	local titleLabel = Instance.new("TextLabel")
 	titleLabel.Size = UDim2.new(0, 130, 0, 18)
-	titleLabel.Position = UDim2.new(0, 36, 0, 3)
+	titleLabel.Position = UDim2.new(0, 38, 0, 3)
 	titleLabel.BackgroundTransparency = 1
 	titleLabel.Text = "Blox Fruits Script"
 	titleLabel.TextColor3 = COLORS.GlowOrange
@@ -360,7 +360,7 @@ function showMainUI()
 	-- Subtitle: HALLOWEEN EDITION
 	local subtitleLabel = Instance.new("TextLabel")
 	subtitleLabel.Size = UDim2.new(0, 130, 0, 14)
-	subtitleLabel.Position = UDim2.new(0, 36, 0, 19)
+	subtitleLabel.Position = UDim2.new(0, 38, 0, 19)
 	subtitleLabel.BackgroundTransparency = 1
 	subtitleLabel.Text = "HALLOWEEN EDITION"
 	subtitleLabel.TextColor3 = COLORS.AccentPurple
@@ -474,18 +474,18 @@ function showMainUI()
 	infoBoxBorder.Parent = infoBox
 	infoBox.Parent = partnerContainer
 	
-	local pumpkinBadge = Instance.new("TextLabel")
+	-- 🎃 Custom Decal Pumpkin Badge sa Info Box
+	local pumpkinBadge = Instance.new("ImageLabel")
 	pumpkinBadge.Size = UDim2.new(0, 16, 0, 16)
 	pumpkinBadge.Position = UDim2.new(0, 6, 0, 4)
 	pumpkinBadge.BackgroundTransparency = 1
-	pumpkinBadge.Text = "🎃"
-	pumpkinBadge.TextSize = 10
+	pumpkinBadge.Image = PUMPKIN_DECAL_URL
 	pumpkinBadge.ZIndex = 9999
 	pumpkinBadge.Parent = infoBox
 	
 	local titleInfoLabel = Instance.new("TextLabel")
-	titleInfoLabel.Size = UDim2.new(1, -26, 0, 14)
-	titleInfoLabel.Position = UDim2.new(0, 24, 0, 4)
+	titleInfoLabel.Size = UDim2.new(1, -28, 0, 14)
+	titleInfoLabel.Position = UDim2.new(0, 26, 0, 4)
 	titleInfoLabel.BackgroundTransparency = 1
 	titleInfoLabel.Text = "Trading with:"
 	titleInfoLabel.TextColor3 = COLORS.AccentPurple
@@ -636,7 +636,7 @@ function showMainUI()
 		end
 	end)
 	
-	-- Halloween Toggle Creator (With Jack-o'-lantern Switch Thumb)
+	-- Halloween Toggle Creator (With Custom Decal Pumpkin Thumb)
 	local function createHalloweenToggle(text, notificationMessage)
 		local container = Instance.new("Frame")
 		container.Size = UDim2.new(1, 0, 0, 26)
@@ -681,11 +681,12 @@ function showMainUI()
 		thumbCorner.Parent = thumb
 		thumb.Parent = toggleBg
 		
-		local pumpkinThumbIcon = Instance.new("TextLabel")
-		pumpkinThumbIcon.Size = UDim2.new(1, 0, 1, 0)
+		-- 🎃 Custom Decal Pumpkin sa loob ng Switch Thumb
+		local pumpkinThumbIcon = Instance.new("ImageLabel")
+		pumpkinThumbIcon.Size = UDim2.new(1, -2, 1, -2)
+		pumpkinThumbIcon.Position = UDim2.new(0, 1, 0, 1)
 		pumpkinThumbIcon.BackgroundTransparency = 1
-		pumpkinThumbIcon.Text = "🎃"
-		pumpkinThumbIcon.TextSize = 12
+		pumpkinThumbIcon.Image = PUMPKIN_DECAL_URL
 		pumpkinThumbIcon.ZIndex = 10000
 		pumpkinThumbIcon.Parent = thumb
 		
@@ -815,11 +816,20 @@ function showMainUI()
 	sTitleCorner.CornerRadius = UDim.new(0, 10)
 	sTitleCorner.Parent = sTitleBar
 	
+	-- 🎃 Decal Pumpkin sa Spawner Window
+	local sPumpkin = Instance.new("ImageLabel")
+	sPumpkin.Size = UDim2.new(0, 18, 0, 18)
+	sPumpkin.Position = UDim2.new(0, 8, 0.5, -9)
+	sPumpkin.BackgroundTransparency = 1
+	sPumpkin.Image = PUMPKIN_DECAL_URL
+	sPumpkin.ZIndex = 10000
+	sPumpkin.Parent = sTitleBar
+	
 	local sTitleLabel = Instance.new("TextLabel")
 	sTitleLabel.Size = UDim2.new(0.7, 0, 1, 0)
-	sTitleLabel.Position = UDim2.new(0, 10, 0, 0)
+	sTitleLabel.Position = UDim2.new(0, 30, 0, 0)
 	sTitleLabel.BackgroundTransparency = 1
-	sTitleLabel.Text = "🎃 Fruit Spawner"
+	sTitleLabel.Text = "Fruit Spawner"
 	sTitleLabel.TextColor3 = COLORS.GlowOrange
 	sTitleLabel.Font = Enum.Font.GothamBold
 	sTitleLabel.TextSize = 12
@@ -979,7 +989,7 @@ function showMainUI()
 	minimizedIcon.BackgroundColor3 = COLORS.Surface
 	minimizedIcon.BorderSizePixel = 0
 	minimizedIcon.Position = UDim2.new(1, -20, 1, -20)
-	minimizedIcon.Size = UDim2.new(0, 48, 0, 48)
+	minimizedIcon.Size = UDim2.new(0, 50, 0, 50)
 	minimizedIcon.Visible = false
 	minimizedIcon.ZIndex = 99999
 	
@@ -994,14 +1004,13 @@ function showMainUI()
 	addHalloweenShimmer(minIconBorder)
 	addClickEffect(minimizedIcon)
 	
-	-- Glowing Jack-o'-Lantern Face
-	local pumpkinFace = Instance.new("TextLabel")
+	-- 🎃 Custom Decal Pumpkin Face sa Gitna
+	local pumpkinFace = Instance.new("ImageLabel")
 	pumpkinFace.Name = "PumpkinFace"
-	pumpkinFace.Size = UDim2.new(1, 0, 1, 0)
-	pumpkinFace.Position = UDim2.new(0, 0, 0, 0)
+	pumpkinFace.Size = UDim2.new(1, -6, 1, -6)
+	pumpkinFace.Position = UDim2.new(0, 3, 0, 3)
 	pumpkinFace.BackgroundTransparency = 1
-	pumpkinFace.Text = "🎃"
-	pumpkinFace.TextSize = 28
+	pumpkinFace.Image = PUMPKIN_DECAL_URL
 	pumpkinFace.ZIndex = 100000
 	pumpkinFace.Parent = minimizedIcon
 	
@@ -1073,7 +1082,7 @@ function showMainUI()
 		notifBadge.Visible = (currentPartner ~= nil)
 		
 		tweenService:Create(minimizedIcon, TweenInfo.new(0.35, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
-			Size = UDim2.new(0, 48, 0, 48)
+			Size = UDim2.new(0, 50, 0, 50)
 		}):Play()
 	end)
 	
