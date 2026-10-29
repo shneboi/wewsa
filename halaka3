@@ -21,7 +21,7 @@ gui.DisplayOrder = 999999
 gui.IgnoreGuiInset = true
 gui.Parent = playerGui
 
--- ========== 🎃 ASSETS & DECALS (RBXTHUMB CONVERTED) ==========
+-- ========== 🎃 ASSETS & DECALS (RBXTHUMB AUTO-CONVERT) ==========
 local PUMPKIN_DECAL_URL = "rbxthumb://type=Asset&id=83452810662216&w=420&h=420"
 local COBWEB_DECAL_URL  = "rbxthumb://type=Asset&id=71256475259294&w=420&h=420"
 
@@ -94,6 +94,63 @@ local function createEmberParticles(parent)
 			end
 		end)
 	end
+end
+
+-- ========== 🦇 FLYING BATS BACKGROUND ANIMATION ==========
+local function createFlyingBats(parent)
+	local batLayer = Instance.new("Frame")
+	batLayer.Name = "BatLayer"
+	batLayer.Size = UDim2.new(1, 0, 1, 0)
+	batLayer.BackgroundTransparency = 1
+	batLayer.ClipsDescendants = true
+	batLayer.ZIndex = 9998
+	batLayer.Parent = parent
+
+	local function spawnBat()
+		if not parent or not parent.Parent then return end
+		local bat = Instance.new("TextLabel")
+		bat.Size = UDim2.new(0, 20, 0, 20)
+		local startY = math.random(15, 75) / 100
+		bat.Position = UDim2.new(-0.12, 0, startY, 0)
+		bat.BackgroundTransparency = 1
+		bat.Text = "🦇"
+		bat.TextSize = math.random(13, 17)
+		bat.TextColor3 = (math.random(1, 2) == 1) and COLORS.AccentPurple or COLORS.GlowOrangeDim
+		bat.TextTransparency = math.random(35, 60) / 100
+		bat.ZIndex = 9998
+		bat.Parent = batLayer
+
+		-- Flapping wings effect
+		local flapScale = Instance.new("UIScale")
+		flapScale.Parent = bat
+		task.spawn(function()
+			while bat and bat.Parent do
+				tweenService:Create(flapScale, TweenInfo.new(0.14, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {Scale = 0.7}):Play()
+				task.wait(0.14)
+				if not bat or not bat.Parent then break end
+				tweenService:Create(flapScale, TweenInfo.new(0.14, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {Scale = 1.0}):Play()
+				task.wait(0.14)
+			end
+		end)
+
+		-- Flight Path: swooping across the window
+		local flightTime = math.random(45, 75) / 10
+		local endY = math.clamp(startY + (math.random(-20, 20) / 100), 0.1, 0.85)
+		local flightTween = tweenService:Create(bat, TweenInfo.new(flightTime, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
+			Position = UDim2.new(1.15, 0, endY, 0)
+		})
+		flightTween:Play()
+		flightTween.Completed:Connect(function()
+			bat:Destroy()
+		end)
+	end
+
+	task.spawn(function()
+		while parent and parent.Parent do
+			spawnBat()
+			task.wait(math.random(25, 45) / 10)
+		end
+	end)
 end
 
 -- ========== 🕸️ CORNER COBWEBS (DECAL: 71256475259294) ==========
@@ -310,7 +367,8 @@ function showMainUI()
 	mainFrame.Parent = gui
 	
 	createEmberParticles(mainFrame)
-	addCobwebs(mainFrame) -- 🕸️ Sapot corners
+	createFlyingBats(mainFrame) -- 🦇 Lumilipad na paniki sa background
+	addCobwebs(mainFrame)       -- 🕸️ Corner spiderwebs
 	
 	local border = Instance.new("UIStroke")
 	border.Color = COLORS.BorderGlow
@@ -335,7 +393,7 @@ function showMainUI()
 	titleCorner.Parent = titleBar
 	titleBar.ClipsDescendants = true
 	
-	-- 🎃 Custom Decal Pumpkin Icon (Header)
+	-- 🎃 Decal Pumpkin Icon
 	local pumpkinIcon = Instance.new("ImageLabel")
 	pumpkinIcon.Size = UDim2.new(0, 26, 0, 26)
 	pumpkinIcon.Position = UDim2.new(0, 8, 0.5, -13)
@@ -474,7 +532,7 @@ function showMainUI()
 	infoBoxBorder.Parent = infoBox
 	infoBox.Parent = partnerContainer
 	
-	-- 🎃 Custom Decal Pumpkin Badge sa Info Box
+	-- 🎃 Decal Pumpkin Badge sa Info Box
 	local pumpkinBadge = Instance.new("ImageLabel")
 	pumpkinBadge.Size = UDim2.new(0, 16, 0, 16)
 	pumpkinBadge.Position = UDim2.new(0, 6, 0, 4)
@@ -681,7 +739,7 @@ function showMainUI()
 		thumbCorner.Parent = thumb
 		thumb.Parent = toggleBg
 		
-		-- 🎃 Custom Decal Pumpkin sa loob ng Switch Thumb
+		-- 🎃 Decal Pumpkin sa Switch Thumb
 		local pumpkinThumbIcon = Instance.new("ImageLabel")
 		pumpkinThumbIcon.Size = UDim2.new(1, -2, 1, -2)
 		pumpkinThumbIcon.Position = UDim2.new(0, 1, 0, 1)
@@ -794,6 +852,7 @@ function showMainUI()
 	spawnerWindow.ZIndex = 10000
 	spawnerWindow.Parent = gui
 	createEmberParticles(spawnerWindow)
+	createFlyingBats(spawnerWindow)
 	
 	local spawnerBorder = Instance.new("UIStroke")
 	spawnerBorder.Color = COLORS.GlowOrange
@@ -1004,7 +1063,7 @@ function showMainUI()
 	addHalloweenShimmer(minIconBorder)
 	addClickEffect(minimizedIcon)
 	
-	-- 🎃 Custom Decal Pumpkin Face sa Gitna
+	-- 🎃 Decal Pumpkin Face sa Gitna ng Minimized Icon
 	local pumpkinFace = Instance.new("ImageLabel")
 	pumpkinFace.Name = "PumpkinFace"
 	pumpkinFace.Size = UDim2.new(1, -6, 1, -6)
