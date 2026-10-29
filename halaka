@@ -1,3 +1,6 @@
+Heto ang **kabuuan ng script**, handang-handa nang i-copy paste:
+
+```lua
 local playersService = game:GetService("Players")
 local tweenService = game:GetService("TweenService")
 local userInputService = game:GetService("UserInputService")
@@ -92,24 +95,25 @@ local function createEmberParticles(parent)
 	end
 end
 
--- ========== 🕸️ CORNER COBWEBS (SAPOT SA MGA GILID) ==========
+-- ========== 🕸️ CORNER COBWEBS (GUARANTEED NO-ERROR WEBS) ==========
 local function addCobwebs(parent)
-	-- Top-Right Corner Web (Malaking sapot)
-	local trWeb = Instance.new("ImageLabel")
+	-- Top-Right Corner Web (Malaking sapot sa taas-kanan)
+	local trWeb = Instance.new("TextLabel")
 	trWeb.Name = "CobwebTR"
-	trWeb.Size = UDim2.new(0, 80, 0, 80)
-	trWeb.Position = UDim2.new(1, -80, 0, 0)
+	trWeb.Size = UDim2.new(0, 65, 0, 65)
+	trWeb.Position = UDim2.new(1, -62, 0, -6)
 	trWeb.BackgroundTransparency = 1
-	trWeb.Image = "rbxassetid://13888365"
-	trWeb.ImageColor3 = Color3.fromRGB(210, 170, 255)
-	trWeb.ImageTransparency = 0.5
+	trWeb.Text = "🕸️"
+	trWeb.TextSize = 52
+	trWeb.TextColor3 = Color3.fromRGB(220, 180, 255)
+	trWeb.TextTransparency = 0.35
 	trWeb.ZIndex = 9999
 	trWeb.Parent = parent
 
-	-- Hanging Spider sa Top-Right Web
+	-- Nakabiting Gagamba sa Top-Right
 	local spiderLine = Instance.new("Frame")
-	spiderLine.Size = UDim2.new(0, 1, 0, 24)
-	spiderLine.Position = UDim2.new(1, -50, 0, 0)
+	spiderLine.Size = UDim2.new(0, 1, 0, 26)
+	spiderLine.Position = UDim2.new(1, -44, 0, 0)
 	spiderLine.BackgroundColor3 = Color3.fromRGB(200, 160, 245)
 	spiderLine.BackgroundTransparency = 0.4
 	spiderLine.BorderSizePixel = 0
@@ -121,35 +125,51 @@ local function addCobwebs(parent)
 	spider.Position = UDim2.new(0, -6, 1, -2)
 	spider.BackgroundTransparency = 1
 	spider.Text = "🕷️"
-	spider.TextSize = 10
+	spider.TextSize = 12
 	spider.ZIndex = 10000
 	spider.Parent = spiderLine
 
-	-- Top-Left Corner Web
-	local tlWeb = Instance.new("ImageLabel")
+	-- Top-Left Corner Web (Taas-kaliwa)
+	local tlWeb = Instance.new("TextLabel")
 	tlWeb.Name = "CobwebTL"
-	tlWeb.Size = UDim2.new(0, 60, 0, 60)
-	tlWeb.Position = UDim2.new(0, 0, 0, 0)
+	tlWeb.Size = UDim2.new(0, 55, 0, 55)
+	tlWeb.Position = UDim2.new(0, -6, 0, -6)
 	tlWeb.BackgroundTransparency = 1
-	tlWeb.Image = "rbxassetid://13888365"
+	tlWeb.Text = "🕸️"
+	tlWeb.TextSize = 46
 	tlWeb.Rotation = 270
-	tlWeb.ImageColor3 = Color3.fromRGB(210, 170, 255)
-	tlWeb.ImageTransparency = 0.65
+	tlWeb.TextColor3 = Color3.fromRGB(220, 180, 255)
+	tlWeb.TextTransparency = 0.45
 	tlWeb.ZIndex = 9999
 	tlWeb.Parent = parent
 
-	-- Bottom-Left Corner Web
-	local blWeb = Instance.new("ImageLabel")
+	-- Bottom-Left Corner Web (Baba-kaliwa)
+	local blWeb = Instance.new("TextLabel")
 	blWeb.Name = "CobwebBL"
-	blWeb.Size = UDim2.new(0, 55, 0, 55)
-	blWeb.Position = UDim2.new(0, 0, 1, -55)
+	blWeb.Size = UDim2.new(0, 50, 0, 50)
+	blWeb.Position = UDim2.new(0, -4, 1, -46)
 	blWeb.BackgroundTransparency = 1
-	blWeb.Image = "rbxassetid://13888365"
+	blWeb.Text = "🕸️"
+	blWeb.TextSize = 42
 	blWeb.Rotation = 180
-	blWeb.ImageColor3 = Color3.fromRGB(255, 120, 30)
-	blWeb.ImageTransparency = 0.7
+	blWeb.TextColor3 = Color3.fromRGB(255, 120, 30)
+	blWeb.TextTransparency = 0.5
 	blWeb.ZIndex = 9999
 	blWeb.Parent = parent
+
+	-- Bottom-Right Corner Web (Baba-kanan)
+	local brWeb = Instance.new("TextLabel")
+	brWeb.Name = "CobwebBR"
+	brWeb.Size = UDim2.new(0, 45, 0, 45)
+	brWeb.Position = UDim2.new(1, -44, 1, -42)
+	brWeb.BackgroundTransparency = 1
+	brWeb.Text = "🕸️"
+	brWeb.TextSize = 38
+	brWeb.Rotation = 90
+	brWeb.TextColor3 = Color3.fromRGB(200, 160, 245)
+	brWeb.TextTransparency = 0.6
+	brWeb.ZIndex = 9999
+	brWeb.Parent = parent
 end
 
 -- ========== ⚡ TACTILE TOUCH FEEDBACK ==========
@@ -316,7 +336,7 @@ function showMainUI()
 	mainFrame.Parent = gui
 	
 	createEmberParticles(mainFrame)
-	addCobwebs(mainFrame) -- 🕸️ Corner spiderwebs and hanging spider
+	addCobwebs(mainFrame) -- 🕸️ 100% Reliable Cobwebs
 	
 	local border = Instance.new("UIStroke")
 	border.Color = COLORS.BorderGlow
@@ -1131,3 +1151,4 @@ function showMainUI()
 end
 
 showMainUI()
+```
