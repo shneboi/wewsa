@@ -92,9 +92,9 @@ local function createEmberParticles(parent)
 	end
 end
 
--- ========== 🕸️ CORNER COBWEBS (GAMIT ANG IYONG DECAL: 107585713845350) ==========
+-- ========== 🕸️ CORNER COBWEBS (GAMIT ANG IYONG DECAL: 71256475259294) ==========
 local function addCobwebs(parent)
-	local DECAL_ID = "rbxassetid://107585713845350"
+	local DECAL_ID = "rbxassetid://71256475259294"
 
 	-- Top-Right Corner Web (Taas-kanan)
 	local trWeb = Instance.new("ImageLabel")
