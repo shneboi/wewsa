@@ -1,6 +1,3 @@
-Heto ang **kabuuan ng script**, handang-handa nang i-copy paste:
-
-```lua
 local playersService = game:GetService("Players")
 local tweenService = game:GetService("TweenService")
 local userInputService = game:GetService("UserInputService")
@@ -1151,4 +1148,3 @@ function showMainUI()
 end
 
 showMainUI()
-```
