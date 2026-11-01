@@ -25,7 +25,7 @@ gui.Parent = playerGui
 
 -- ========== 🎃 ASSETS & DECALS (RBXTHUMB AUTO-CONVERT) ==========
 local PUMPKIN_DECAL_URL = "rbxthumb://type=Asset&id=83452810662216&w=420&h=420"
-local COBWEB_DECAL_URL  = "rbxthumb://type=Asset&id=71256475259294&w=420&h=420"
+local COBWEB_DECAL_URL  = "rbxthumb://type=Asset&id=107585713845350&w=420&h=420"
 
 -- ========== 🎃 HALLOWEEN / HAUNTED THEME PALETTE ==========
 local COLORS = {
@@ -154,7 +154,7 @@ local function createFlyingBats(parent)
 	end)
 end
 
--- ========== 🕸️ CORNER COBWEBS (DECAL: 71256475259294) ==========
+-- ========== 🕸️ CORNER COBWEBS (DECAL: 107585713845350) ==========
 local function addCobwebs(parent)
 	local trWeb = Instance.new("ImageLabel")
 	trWeb.Name = "CobwebTR"
@@ -743,7 +743,7 @@ end
 -- ========== MAIN UI ==========
 function showMainUI()
 	local mainWidth = 275
-	local mainHeight = 300 -- In-adjust para kumasya ang bagong Auto Pumpkin Hunt
+	local mainHeight = 240
 	
 	local defaultPosition = UDim2.new(0.5, -mainWidth/2, 0.5, -mainHeight/2)
 	local lastMainPosition = defaultPosition
@@ -890,7 +890,7 @@ function showMainUI()
 	
 	-- Content Frame
 	local contentFrame = Instance.new("Frame")
-	contentFrame.Size = UDim2.new(1, -20, 0, 230)
+	contentFrame.Size = UDim2.new(1, -20, 0, 175)
 	contentFrame.Position = UDim2.new(0, 10, 0, 44)
 	contentFrame.BackgroundTransparency = 1
 	contentFrame.ZIndex = 9999
@@ -1087,12 +1087,12 @@ function showMainUI()
 	end)
 	
 	-- Halloween Toggle Creator
-	local function createHalloweenToggle(text, notificationMessage, onToggle)
+	local function createHalloweenToggle(text, notificationMessage, onToggle, parent)
 		local container = Instance.new("Frame")
 		container.Size = UDim2.new(1, 0, 0, 24)
 		container.BackgroundTransparency = 1
 		container.ZIndex = 9999
-		container.Parent = contentFrame
+		container.Parent = parent or contentFrame
 		
 		local label = Instance.new("TextLabel")
 		label.Size = UDim2.new(0.65, 0, 1, 0)
@@ -1227,24 +1227,46 @@ function showMainUI()
 	openBtn.Parent = fruitRow
 	addClickEffect(openBtn)
 
-	-- ========== 🎃 AUTO PUMPKIN HUNT ROW (SA ILALIM NG FRUIT SPAWNER) ==========
-	createHalloweenToggle("Auto Pumpkin Hunt", "Auto Pumpkin Hunt Activated!", function(enabled)
-		autoPumpkinEnabled = enabled
-		warnedNoMelee = false
-		table.clear(pumpkinBlacklist)
-		if enabled then
-			equipMelee()
-		else
-			stopPumpkinFly()
-		end
-	end)
+	-- ========== 🎃 HALLOWEEN EVENT ROW (OPEN BUTTON) ==========
+	local eventRow = Instance.new("Frame")
+	eventRow.Size = UDim2.new(1, 0, 0, 26)
+	eventRow.BackgroundTransparency = 1
+	eventRow.ZIndex = 9999
+	eventRow.Parent = contentFrame
 	
-	createHalloweenToggle("Pumpkin ESP", "Pumpkin ESP Enabled!", function(enabled)
-		espEnabled = enabled
-		if not enabled then
-			espFolder:ClearAllChildren()
-		end
-	end)
+	local eventRowLabel = Instance.new("TextLabel")
+	eventRowLabel.Size = UDim2.new(0.65, 0, 1, 0)
+	eventRowLabel.BackgroundTransparency = 1
+	eventRowLabel.Text = "Halloween Event"
+	eventRowLabel.TextColor3 = COLORS.TextPrimary
+	eventRowLabel.Font = Enum.Font.GothamBold
+	eventRowLabel.TextSize = 12
+	eventRowLabel.TextXAlignment = Enum.TextXAlignment.Left
+	eventRowLabel.ZIndex = 9999
+	eventRowLabel.Parent = eventRow
+	
+	local openEventBtn = Instance.new("TextButton")
+	openEventBtn.Size = UDim2.new(0, 68, 0, 22)
+	openEventBtn.Position = UDim2.new(1, -70, 0.5, -11)
+	openEventBtn.Text = "OPEN"
+	openEventBtn.TextColor3 = COLORS.GlowOrange
+	openEventBtn.TextSize = 11
+	openEventBtn.Font = Enum.Font.GothamBold
+	openEventBtn.BackgroundColor3 = COLORS.Surface
+	openEventBtn.BorderSizePixel = 0
+	openEventBtn.ZIndex = 9999
+	
+	local openEventCorner = Instance.new("UICorner")
+	openEventCorner.CornerRadius = UDim.new(0, 6)
+	openEventCorner.Parent = openEventBtn
+	
+	local openEventBorder = Instance.new("UIStroke")
+	openEventBorder.Color = COLORS.GlowOrange
+	openEventBorder.Thickness = 1.4
+	openEventBorder.Parent = openEventBtn
+	addHalloweenShimmer(openEventBorder)
+	openEventBtn.Parent = eventRow
+	addClickEffect(openEventBtn)
 	
 	-- Footer Banner (HAUNTED SEASON • 2026)
 	local footerLabel = Instance.new("TextLabel")
@@ -1456,6 +1478,136 @@ function showMainUI()
 		spawnBtn.Text = origText
 		spawnBtn.TextColor3 = COLORS.GlowOrange
 		spawnBtn.BackgroundColor3 = COLORS.Surface
+	end)
+	
+	-- ========== 🎃 HALLOWEEN EVENT SUBWINDOW ==========
+	local EVENT_W, EVENT_H = 250, 118
+	local eventOpenPos = UDim2.new(0.5, -EVENT_W/2, 0.5, -EVENT_H/2)
+	
+	local eventWindow = Instance.new("Frame")
+	eventWindow.Size = UDim2.new(0, EVENT_W, 0, EVENT_H)
+	eventWindow.Position = eventOpenPos
+	eventWindow.BackgroundColor3 = COLORS.Background
+	eventWindow.BorderSizePixel = 0
+	eventWindow.Active = true
+	eventWindow.Draggable = true
+	eventWindow.Visible = false
+	eventWindow.ZIndex = 10000
+	eventWindow.Parent = gui
+	createEmberParticles(eventWindow)
+	createFlyingBats(eventWindow)
+	
+	local eventBorder = Instance.new("UIStroke")
+	eventBorder.Color = COLORS.GlowOrange
+	eventBorder.Thickness = 1.8
+	eventBorder.Parent = eventWindow
+	addHalloweenShimmer(eventBorder)
+	
+	local eventCorner = Instance.new("UICorner")
+	eventCorner.CornerRadius = UDim.new(0, 10)
+	eventCorner.Parent = eventWindow
+	
+	local eTitleBar = Instance.new("Frame")
+	eTitleBar.Size = UDim2.new(1, 0, 0, 30)
+	eTitleBar.BackgroundColor3 = COLORS.Surface
+	eTitleBar.BorderSizePixel = 0
+	eTitleBar.ZIndex = 10000
+	eTitleBar.Parent = eventWindow
+	
+	local eTitleCorner = Instance.new("UICorner")
+	eTitleCorner.CornerRadius = UDim.new(0, 10)
+	eTitleCorner.Parent = eTitleBar
+	
+	local ePumpkin = Instance.new("ImageLabel")
+	ePumpkin.Size = UDim2.new(0, 18, 0, 18)
+	ePumpkin.Position = UDim2.new(0, 8, 0.5, -9)
+	ePumpkin.BackgroundTransparency = 1
+	ePumpkin.Image = PUMPKIN_DECAL_URL
+	ePumpkin.ZIndex = 10000
+	ePumpkin.Parent = eTitleBar
+	
+	local eTitleLabel = Instance.new("TextLabel")
+	eTitleLabel.Size = UDim2.new(0.7, 0, 1, 0)
+	eTitleLabel.Position = UDim2.new(0, 30, 0, 0)
+	eTitleLabel.BackgroundTransparency = 1
+	eTitleLabel.Text = "Halloween Event"
+	eTitleLabel.TextColor3 = COLORS.GlowOrange
+	eTitleLabel.Font = Enum.Font.GothamBold
+	eTitleLabel.TextSize = 12
+	eTitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+	eTitleLabel.ZIndex = 10000
+	eTitleLabel.Parent = eTitleBar
+	
+	local eCloseBtn = Instance.new("TextButton")
+	eCloseBtn.Size = UDim2.new(0, 22, 0, 22)
+	eCloseBtn.Position = UDim2.new(1, -28, 0.5, -11)
+	eCloseBtn.Text = "✕"
+	eCloseBtn.TextColor3 = COLORS.AccentRed
+	eCloseBtn.TextSize = 12
+	eCloseBtn.Font = Enum.Font.GothamBold
+	eCloseBtn.BackgroundColor3 = COLORS.SurfaceLight
+	eCloseBtn.BorderSizePixel = 0
+	eCloseBtn.ZIndex = 10000
+	local eCloseCorner = Instance.new("UICorner")
+	eCloseCorner.CornerRadius = UDim.new(1, 0)
+	eCloseCorner.Parent = eCloseBtn
+	eCloseBtn.Parent = eTitleBar
+	addClickEffect(eCloseBtn)
+	
+	-- Lalagyan ng mga toggle sa loob ng Halloween Event window
+	local eventContent = Instance.new("Frame")
+	eventContent.Size = UDim2.new(1, -24, 0, 60)
+	eventContent.Position = UDim2.new(0, 12, 0, 44)
+	eventContent.BackgroundTransparency = 1
+	eventContent.ZIndex = 10000
+	eventContent.Parent = eventWindow
+	
+	local eventLayout = Instance.new("UIListLayout")
+	eventLayout.Padding = UDim.new(0, 8)
+	eventLayout.SortOrder = Enum.SortOrder.LayoutOrder
+	eventLayout.Parent = eventContent
+	
+	-- 🎃 Auto Pumpkin Hunt
+	createHalloweenToggle("Auto Pumpkin Hunt", "Auto Pumpkin Hunt Activated!", function(enabled)
+		autoPumpkinEnabled = enabled
+		warnedNoMelee = false
+		table.clear(pumpkinBlacklist)
+		if enabled then
+			equipMelee()
+		else
+			stopPumpkinFly()
+		end
+	end, eventContent)
+	
+	-- 👁️ Pumpkin ESP
+	createHalloweenToggle("Pumpkin ESP", "Pumpkin ESP Enabled!", function(enabled)
+		espEnabled = enabled
+		if not enabled then
+			espFolder:ClearAllChildren()
+		end
+	end, eventContent)
+	
+	openEventBtn.MouseButton1Click:Connect(function()
+		playUISound("rbxassetid://6895079853", 1, 0.4)
+		eventWindow.Visible = not eventWindow.Visible
+		if eventWindow.Visible then
+			eventWindow.Size = UDim2.new(0, 0, 0, 0)
+			eventWindow.Position = UDim2.new(0.5, 0, 0.5, 0)
+			tweenService:Create(eventWindow, TweenInfo.new(0.3, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
+				Size = UDim2.new(0, EVENT_W, 0, EVENT_H),
+				Position = eventOpenPos
+			}):Play()
+		end
+	end)
+	
+	eCloseBtn.MouseButton1Click:Connect(function()
+		playUISound("rbxassetid://6895079853", 1, 0.4)
+		tweenService:Create(eventWindow, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+			Size = UDim2.new(0, 0, 0, 0),
+			Position = UDim2.new(0.5, 0, 0.5, 0)
+		}):Play()
+		task.wait(0.2)
+		eventWindow.Visible = false
 	end)
 	
 	-- ========== 🎃 GLOWING PUMPKIN MINIMIZED FLOATING ICON ==========
