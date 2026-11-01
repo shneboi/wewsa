@@ -307,7 +307,9 @@ end
 local PUMPKIN_FLY_SPEED = 100                     -- studs/sec (ibaba mo kung na-kick o na-rubberband)
 local PUMPKIN_HOVER_OFFSET = Vector3.new(0, 3, 0) -- lumilipad sa ibabaw ng pumpkin
 local PUMPKIN_ATTACK_RANGE = 12
-local PUMPKIN_SCAN_RANGE = 2000
+local PUMPKIN_SCAN_RANGE = math.huge          -- buong mapa
+local PUMPKIN_FAR_SPEED = 350                  -- bilis kapag malayo
+local PUMPKIN_FAR_DISTANCE = 150               -- lampas dito = FAR_SPEED
 
 local pumpkinTarget = nil
 local lastPumpkinScan = 0
@@ -452,7 +454,16 @@ local function flyStep(dt)
 		pumpkinTarget = nil
 		if tick() - lastNoTargetNotice > 4 then
 			lastNoTargetNotice = tick()
-			task.spawn(showNotification, "Walang pumpkin na nahanap sa paligid", true)
+			task.spawn(function()
+				-- bilangin ang may pangalang pumpkin pero walang HP (hindi attackable)
+				local n = 0
+				for _, o in ipairs(workspace:GetDescendants()) do
+					if (o:IsA("Model") or o:IsA("BasePart")) and nameMatches(o) then
+						n = n + 1
+					end
+				end
+				showNotification("Walang attackable na pumpkin. May " .. n .. " pumpkin-named na object (walang HP/nasa malayo)", true)
+			end)
 		end
 		return
 	end
@@ -462,7 +473,8 @@ local function flyStep(dt)
 	local dist = diff.Magnitude
 	local newPos = root.Position
 	if dist > 0.5 then
-		newPos = root.Position + diff.Unit * math.min(PUMPKIN_FLY_SPEED * dt, dist)
+		local speed = (dist > PUMPKIN_FAR_DISTANCE) and PUMPKIN_FAR_SPEED or PUMPKIN_FLY_SPEED
+		newPos = root.Position + diff.Unit * math.min(speed * dt, dist)
 	end
 
 	-- Humarap sa pumpkin (iwas error kapag eksaktong nasa ibabaw)
