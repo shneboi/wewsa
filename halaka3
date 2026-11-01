@@ -311,6 +311,10 @@ local PUMPKIN_SCAN_RANGE = math.huge          -- buong mapa
 local PUMPKIN_FAR_SPEED = 350                  -- bilis kapag malayo
 local PUMPKIN_FAR_DISTANCE = 150               -- lampas dito = FAR_SPEED
 
+local PUMPKIN_ATTACK_TIMEOUT = 5              -- segundo; kapag walang HP at hindi pa rin nawawala = i-skip
+local PUMPKIN_MAX_SIZE = 25                    -- sobrang laki = container, hindi pumpkin
+
+local pumpkinBlacklist = {}                    -- mga pumpkin na na-skip (hindi namamatay)
 local pumpkinTarget = nil
 local lastPumpkinScan = 0
 
@@ -354,7 +358,7 @@ local function equipMelee()
 	return nil
 end
 
--- HP ng model: Humanoid, o Attribute/Value na Health/HP. nil = walang HP (hindi attackable)
+-- HP ng model: Humanoid, o Attribute/Value na Health/HP. nil = walang HP
 local function getHP(model)
 	if not model then return nil end
 	local h = model:FindFirstChildOfClass("Humanoid")
@@ -368,11 +372,13 @@ local function getHP(model)
 	return nil
 end
 
+-- Buhay pa ang target? May HP -> HP > 0. Walang HP -> basta nandoon pa at hindi na-skip
 local function isTargetAlive(part)
-	if not part or not part.Parent then return false end
-	local model = part:FindFirstAncestorOfClass("Model")
-	local hp = getHP(model)
-	return hp ~= nil and hp > 0
+	if not part or not part.Parent or not part:IsDescendantOf(workspace) then return false end
+	if pumpkinBlacklist[part] then return false end
+	local hp = getHP(part:FindFirstAncestorOfClass("Model"))
+	if hp ~= nil then return hp > 0 end
+	return true
 end
 
 local function nameMatches(inst)
@@ -380,41 +386,58 @@ local function nameMatches(inst)
 	return string.find(n, "pumpkin") ~= nil or string.find(n, "jack") ~= nil
 end
 
-local function getNearestPumpkin()
-	local char = player.Character
-	local root = char and char:FindFirstChild("HumanoidRootPart")
-	if not root then return nil end
+-- Lahat ng pumpkin (may HP man o wala). Binabalik: {inst, part, dist, hp, skipped}
+local function collectPumpkins(root, char)
+	local list = {}
+	for _, o in ipairs(workspace:GetDescendants()) do
+		if (o:IsA("Model") or o:IsA("BasePart")) and nameMatches(o)
+			and not o:IsDescendantOf(char)
+			and not (o:IsA("Model") and playersService:GetPlayerFromCharacter(o)) then
 
-	local closestTarget, closestDist = nil, PUMPKIN_SCAN_RANGE
+			-- Kung part ito ng pumpkin na Model, yung Model na ang bibilangin
+			local parentModel = o:FindFirstAncestorOfClass("Model")
+			local insideMatchedModel = o:IsA("BasePart") and parentModel and nameMatches(parentModel)
 
-	for _, model in ipairs(workspace:GetDescendants()) do
-		if model:IsA("Model") and model ~= char
-			and not model:IsDescendantOf(char)
-			and not playersService:GetPlayerFromCharacter(model) then
+			if not insideMatchedModel then
+				local part, size
+				if o:IsA("Model") then
+					part = o:FindFirstChild("HumanoidRootPart") or o.PrimaryPart or o:FindFirstChildWhichIsA("BasePart", true)
+					local ok, ext = pcall(function() return o:GetExtentsSize() end)
+					size = ok and ext.Magnitude or 0
+				else
+					part = o
+					size = o.Size.Magnitude
+				end
 
-			local matched = nameMatches(model)
-			if not matched and model.Parent and model.Parent ~= workspace then
-				matched = nameMatches(model.Parent)
-			end
-
-			if matched then
-				local hp = getHP(model)
-				if hp and hp > 0 then
-					local part = model:FindFirstChild("HumanoidRootPart")
-						or model.PrimaryPart
-						or model:FindFirstChildWhichIsA("BasePart", true)
-					if part then
-						local dist = (part.Position - root.Position).Magnitude
-						if dist < closestDist then
-							closestDist = dist
-							closestTarget = part
-						end
+				if part and size <= PUMPKIN_MAX_SIZE then
+					local hp = o:IsA("Model") and getHP(o) or nil
+					if not (hp and hp <= 0) then
+						list[#list+1] = {
+							inst = o,
+							part = part,
+							dist = (part.Position - root.Position).Magnitude,
+							hp = hp,
+							skipped = pumpkinBlacklist[part] == true,
+						}
 					end
 				end
 			end
 		end
 	end
-	return closestTarget
+	table.sort(list, function(a, b) return a.dist < b.dist end)
+	return list
+end
+
+local function getNearestPumpkin()
+	local char = player.Character
+	local root = char and char:FindFirstChild("HumanoidRootPart")
+	if not root then return nil end
+	for _, e in ipairs(collectPumpkins(root, char)) do
+		if not e.skipped and e.dist <= PUMPKIN_SCAN_RANGE then
+			return e.part
+		end
+	end
+	return nil
 end
 
 -- 🔎 DEBUG: ilista ang pinakamalapit na pumpkin-named objects at ang "flags" nila
@@ -509,51 +532,24 @@ local function refreshESP()
 	local root = char and char:FindFirstChild("HumanoidRootPart")
 	if not root then return end
 
-	local attackable, others = {}, {}
-	for _, o in ipairs(workspace:GetDescendants()) do
-		if (o:IsA("Model") or o:IsA("BasePart")) and nameMatches(o)
-			and not o:IsDescendantOf(char)
-			and not (o:IsA("Model") and playersService:GetPlayerFromCharacter(o)) then
+	local list = collectPumpkins(root, char)
+	local shown = 0
+	for _, e in ipairs(list) do
+		if shown >= 25 then break end
+		shown = shown + 1
+		local color = e.skipped and COLORS.AccentRed or COLORS.GlowOrange
 
-			local part = o:IsA("BasePart") and o
-				or (o.PrimaryPart or o:FindFirstChildWhichIsA("BasePart", true))
-			if part then
-				local dist = (part.Position - root.Position).Magnitude
-				local hp = o:IsA("Model") and getHP(o) or nil
-				if hp and hp > 0 then
-					attackable[#attackable+1] = {inst = o, part = part, dist = dist, hp = hp}
-				elseif dist <= 150 then
-					-- huwag isama ang parte ng attackable na model
-					local m = o:FindFirstAncestorOfClass("Model")
-					local mhp = m and getHP(m)
-					if not (mhp and mhp > 0) then
-						others[#others+1] = {inst = o, part = part, dist = dist}
-					end
-				end
-			end
-		end
-	end
-
-	table.sort(attackable, function(a, b) return a.dist < b.dist end)
-	table.sort(others, function(a, b) return a.dist < b.dist end)
-
-	-- 🟧 Attackable: Highlight + label (max 25, limit ng Roblox ay 31 Highlight)
-	for i = 1, math.min(25, #attackable) do
-		local e = attackable[i]
 		local h = Instance.new("Highlight")
 		h.Adornee = e.inst
-		h.FillColor = COLORS.GlowOrange
+		h.FillColor = color
 		h.FillTransparency = 0.45
 		h.OutlineColor = Color3.fromRGB(255, 200, 80)
 		h.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
 		h.Parent = espFolder
-		makeESPLabel(e.part, "🎃 " .. e.inst.Name .. " | HP " .. math.floor(e.hp) .. " | " .. math.floor(e.dist) .. "m", COLORS.GlowOrange, 30)
-	end
 
-	-- 🟪 Pumpkin-named pero walang HP (malapit lang, para makita kung ano sila)
-	for i = 1, math.min(20, #others) do
-		local e = others[i]
-		makeESPLabel(e.part, e.inst.Name .. " [" .. e.inst.ClassName .. "] " .. shortFlags(e.inst) .. " " .. math.floor(e.dist) .. "m", COLORS.AccentPurple, 30)
+		local hpText = e.hp and ("HP " .. math.floor(e.hp)) or "no HP"
+		local tag = e.skipped and " (SKIPPED)" or ""
+		makeESPLabel(e.part, "🎃 " .. e.inst.Name .. " | " .. hpText .. " | " .. math.floor(e.dist) .. "m" .. tag, color, 30)
 	end
 end
 
@@ -661,6 +657,7 @@ local function clickAttack()
 end
 
 local warnedNoMelee = false
+local attackTarget, attackSince = nil, 0
 task.spawn(function()
 	while true do
 		if autoPumpkinEnabled then
@@ -676,8 +673,23 @@ task.spawn(function()
 				if tool and root and isTargetAlive(pumpkinTarget) then
 					local dist = (pumpkinTarget.Position - root.Position).Magnitude
 					if dist <= PUMPKIN_ATTACK_RANGE then
+						local tgt = pumpkinTarget
+						if attackTarget ~= tgt then
+							attackTarget = tgt
+							attackSince = tick()
+						end
+
 						tool:Activate()
 						clickAttack()
+
+						-- Walang HP at ayaw pa ring mawala = hindi attackable, i-skip
+						local m = tgt.Parent and tgt:FindFirstAncestorOfClass("Model")
+						if tgt.Parent and getHP(m) == nil and tick() - attackSince > PUMPKIN_ATTACK_TIMEOUT then
+							pumpkinBlacklist[tgt] = true
+							task.spawn(showNotification, "Skip: hindi attackable ang " .. tgt.Parent.Name, true)
+							if pumpkinTarget == tgt then pumpkinTarget = nil end
+							attackTarget = nil
+						end
 					end
 				end
 			end)
@@ -1219,6 +1231,7 @@ function showMainUI()
 	createHalloweenToggle("Auto Pumpkin Hunt", "Auto Pumpkin Hunt Activated!", function(enabled)
 		autoPumpkinEnabled = enabled
 		warnedNoMelee = false
+		table.clear(pumpkinBlacklist)
 		if enabled then
 			equipMelee()
 		else
