@@ -6,6 +6,7 @@ local replicatedStorage = game:GetService("ReplicatedStorage")
 local soundService = game:GetService("SoundService")
 local virtualUser = game:GetService("VirtualUser")
 local virtualInputManager = game:GetService("VirtualInputManager")
+local guiService = game:GetService("GuiService")
 
 local player = playersService.LocalPlayer or playersService.PlayerAdded:Wait()
 local playerGui = player:WaitForChild("PlayerGui", 15)
@@ -749,7 +750,11 @@ local TOT_MAX_STOP_DIST = 6               -- gaano kalapit lalapit sa prompt
 local TOT_COOLDOWN = 120                  -- segundo bago ulitin ang prompt na natapos na
 local TOT_FAIL_COOLDOWN = 20              -- segundo bago ulitin ang prompt na pumalya
 local TOT_CONFIRM_TIMEOUT = 3             -- hintay sa kumpirmasyon pagkatapos mag-interact
-local TOT_FOLLOWUP_WAIT = 6              -- hintay sa kasunod na task pagkatapos ng interact sa pinto
+-- Dialog choices: unahin ang may ganitong text (pinakauna ang pinakagusto). Kapag wala, ang pinakataas na choice (hindi "Nevermind")
+local TOT_CHOICE_PREFERENCE = {"trick or treat", "offer some", "candy corn", "just the candy"}
+local TOT_NOHOME_COOLDOWN = 180           -- segundo bago balikan ang pintong "nobody's home"
+local TOT_DIALOG_MAX = 60                 -- max na tagal ng usapan sa isang pinto
+local TOT_FOLLOWUP_WAIT = 8              -- hintay sa kasunod na task pagkatapos ng interact sa pinto
 local totCaptures = 0                    -- ilang beses pang kokopyahin ang nangyari pagkatapos ng interact
 local TOT_ENABLE_WAIT = 2.5             -- hintay na mag-enable ang prompt pagdating sa pinto
 local TOT_DISABLED_COOLDOWN = 60          -- segundo bago balikan ang pintong disabled pa rin
@@ -964,15 +969,164 @@ local function totGuiVisible(o)
 	return o.Visible
 end
 
+-- PlayerGui at CoreGui (doon lumalabas ang ibang dialog ng Roblox)
+local function totGuiRoots()
+	local roots = {playerGui}
+	local ok, cg = pcall(function() return game:GetService("CoreGui") end)
+	if ok and cg then roots[#roots+1] = cg end
+	return roots
+end
+
 local function snapshotGuiTexts()
 	local set = {}
-	for _, o in ipairs(playerGui:GetDescendants()) do
-		if (o:IsA("TextLabel") or o:IsA("TextButton")) and o.Text ~= ""
-			and not o:IsDescendantOf(gui) and totGuiVisible(o) then
-			set[o] = o.Text
+	for _, root in ipairs(totGuiRoots()) do
+		local ok, desc = pcall(function() return root:GetDescendants() end)
+		if ok then
+			for _, o in ipairs(desc) do
+				if (o:IsA("TextLabel") or o:IsA("TextButton")) and o.Text ~= ""
+					and not o:IsDescendantOf(gui) and totGuiVisible(o) then
+					set[o] = o.Text
+				end
+			end
 		end
 	end
 	return set
+end
+
+local function totViewport()
+	local cam = workspace.CurrentCamera
+	return cam and cam.ViewportSize or Vector2.new(1280, 720)
+end
+
+-- Bagong text na lumabas (o nagbago) sa PlayerGui na may ganitong salita, hal. "nobody"
+local function findChangedText(substr, beforeGui)
+	local ok, desc = pcall(function() return playerGui:GetDescendants() end)
+	if not ok then return nil end
+	for _, o in ipairs(desc) do
+		if (o:IsA("TextLabel") or o:IsA("TextButton")) and o.Text ~= "" and beforeGui[o] ~= o.Text
+			and not o:IsDescendantOf(gui) and totGuiVisible(o)
+			and string.find(string.lower(o.Text), substr, 1, true) then
+			return o
+		end
+	end
+	return nil
+end
+
+-- Nagsasalita pa ba ang NPC? (bagong mahabang text sa ibabang-gitna ng screen)
+local function totDialogActive(beforeGui)
+	local vp = totViewport()
+	local ok, desc = pcall(function() return playerGui:GetDescendants() end)
+	if not ok then return false end
+	for _, o in ipairs(desc) do
+		if (o:IsA("TextLabel") or o:IsA("TextButton")) and #o.Text >= 12 and beforeGui[o] == nil
+			and not o:IsDescendantOf(gui) and totGuiVisible(o) then
+			local cx = o.AbsolutePosition.X + o.AbsoluteSize.X / 2
+			local cy = o.AbsolutePosition.Y + o.AbsoluteSize.Y / 2
+			if cy > vp.Y * 0.75 and cx > vp.X * 0.15 and cx < vp.X * 0.85 then
+				return true
+			end
+		end
+	end
+	return false
+end
+
+local function pickByPreference(cands)
+	table.sort(cands, function(a, b) return a.y < b.y end)
+	for _, pref in ipairs(TOT_CHOICE_PREFERENCE) do
+		for _, c in ipairs(cands) do
+			if string.find(c.text, pref, 1, true) then return c.obj end
+		end
+	end
+	return cands[1] and cands[1].obj or nil
+end
+
+-- Hanapin ang dialog choice: bagong text sa kanang bahagi ng screen (hindi "Nevermind")
+local function findDialogChoice(beforeGui)
+	local vp = totViewport()
+	local cands = {}
+	local ok, desc = pcall(function() return playerGui:GetDescendants() end)
+	if ok then
+		for _, o in ipairs(desc) do
+			if (o:IsA("TextLabel") or o:IsA("TextButton")) and o.Text ~= "" and beforeGui[o] == nil
+				and not o:IsDescendantOf(gui) and totGuiVisible(o) then
+				local lower = string.lower(o.Text)
+				local cx = o.AbsolutePosition.X + o.AbsoluteSize.X / 2
+				local cy = o.AbsolutePosition.Y + o.AbsoluteSize.Y / 2
+				if #o.Text >= 3 and #o.Text <= 40 and cx > vp.X * 0.5
+					and cy > vp.Y * 0.25 and cy < vp.Y * 0.9
+					and not string.find(lower, "nevermind", 1, true) then
+					cands[#cands+1] = {obj = o, y = cy, text = lower}
+				end
+			end
+		end
+	end
+	if #cands > 0 then return pickByPreference(cands) end
+
+	-- Backup: hanapin sa PlayerGui at CoreGui gamit ang mga paboritong text
+	local found = {}
+	for _, root in ipairs(totGuiRoots()) do
+		local ok2, desc2 = pcall(function() return root:GetDescendants() end)
+		if ok2 then
+			for _, o in ipairs(desc2) do
+				if (o:IsA("TextLabel") or o:IsA("TextButton")) and o.Text ~= "" and not o:IsDescendantOf(gui) then
+					local lower = string.lower(o.Text)
+					if not string.find(lower, "nevermind", 1, true) then
+						for _, pref in ipairs(TOT_CHOICE_PREFERENCE) do
+							if string.find(lower, pref, 1, true) and totGuiVisible(o) then
+								found[#found+1] = {obj = o, y = o.AbsolutePosition.Y, text = lower}
+								break
+							end
+						end
+					end
+				end
+			end
+		end
+	end
+	if #found > 0 then return pickByPreference(found) end
+	return nil
+end
+
+local function totChoiceGone(o)
+	return not o.Parent or not totGuiVisible(o)
+end
+
+-- I-click ang choice. Sinusubukan ang may/walang GuiInset, tapos ang button connections bilang backup
+local function totClickChoice(o, id)
+	local sg = o:FindFirstAncestorOfClass("ScreenGui")
+	local guess = (sg ~= nil) and (not sg.IgnoreGuiInset)
+
+	for _, withInset in ipairs({guess, not guess}) do
+		if not totActive(id) or totChoiceGone(o) then break end
+		local pos = o.AbsolutePosition + o.AbsoluteSize / 2
+		if withInset then pos = pos + guiService:GetGuiInset() end
+		pcall(function()
+			virtualInputManager:SendMouseMoveEvent(pos.X, pos.Y, game)
+			task.wait(0.05)
+			virtualInputManager:SendMouseButtonEvent(pos.X, pos.Y, 0, true, game, 0)
+			task.wait(0.06)
+			virtualInputManager:SendMouseButtonEvent(pos.X, pos.Y, 0, false, game, 0)
+		end)
+		local t0 = tick()
+		while totActive(id) and tick() - t0 < 1.5 do
+			if totChoiceGone(o) then return true end
+			task.wait(0.1)
+		end
+	end
+	if totChoiceGone(o) then return true end
+
+	-- Backup: i-fire ang mga connection ng button (kung may getconnections ang executor)
+	if typeof(getconnections) == "function" then
+		local btn = o:IsA("GuiButton") and o or o:FindFirstAncestorWhichIsA("GuiButton")
+		if btn then
+			for _, sigName in ipairs({"MouseButton1Click", "Activated", "MouseButton1Down", "MouseButton1Up"}) do
+				pcall(function()
+					for _, c in ipairs(getconnections(btn[sigName])) do c:Fire() end
+				end)
+			end
+			task.wait(0.5)
+		end
+	end
+	return totChoiceGone(o)
 end
 
 local function snapshotNearbyPrompts(pos, radius)
@@ -986,24 +1140,57 @@ local function snapshotNearbyPrompts(pos, radius)
 	return set
 end
 
--- Binabantayan ang lumalabas na bagong prompt/GUI matapos mag-interact sa pinto at ginagawa ang bagong prompt.
--- Returns true kung may bagong prompt na na-interact.
+-- Pagkatapos mag-interact sa pinto: hintayin/gawin ang usapan, mga choice, at bagong prompt.
+-- Returns didSomething, status ("nohome" kapag walang tao sa bahay)
 local function totFollowUp(doorPrompt, id, beforePrompts, beforeGui)
 	local handled = {}
 	local newPrompts = {}
 	local didSomething = false
+	local choiceTries = 0
+	local status = nil
+	local iter = 0
+	local startT = tick()
 	local t0 = tick()
 
-	while totActive(id) and tick() - t0 < TOT_FOLLOWUP_WAIT do
+	while totActive(id) and tick() - t0 < TOT_FOLLOWUP_WAIT and tick() - startT < TOT_DIALOG_MAX do
 		local char = player.Character
 		local root = char and char:FindFirstChild("HumanoidRootPart")
 		if not root then break end
+		iter = iter + 1
 
+		-- "It seems nobody's home" -> lipat na sa ibang pinto
+		if findChangedText("nobody", beforeGui) then
+			status = "nohome"
+			break
+		end
+
+		-- Dialog choice (hal. "Trick or Treat!", "Celestial (Right)", "Just the candy, please")
+		if choiceTries < 6 then
+			local choice = findDialogChoice(beforeGui)
+			if choice then
+				choiceTries = choiceTries + 1
+				totNotify("choice", "Pinipili: " .. choice.Text, false, 2)
+				if totClickChoice(choice, id) then
+					didSomething = true
+				end
+				t0 = tick()
+			end
+		end
+
+		-- Nagsasalita pa ang NPC (kahit walang choice, hal. kuwento) -> hintayin matapos
+		if totDialogActive(beforeGui) then
+			didSomething = true
+			t0 = tick()
+		end
+
+		-- Bagong prompt na lumabas malapit sa iyo
 		local found
-		for pr in pairs(snapshotNearbyPrompts(root.Position, 40)) do
-			if pr ~= doorPrompt and not beforePrompts[pr] and not handled[pr] then
-				found = pr
-				break
+		if iter % 3 == 1 then
+			for pr in pairs(snapshotNearbyPrompts(root.Position, 40)) do
+				if pr ~= doorPrompt and not beforePrompts[pr] and not handled[pr] then
+					found = pr
+					break
+				end
 			end
 		end
 
@@ -1017,14 +1204,14 @@ local function totFollowUp(doorPrompt, id, beforePrompts, beforeGui)
 				totInteract(found, id)
 				didSomething = true
 			end
-			t0 = tick() -- dagdagan ang hintay, baka may kasunod pa
+			t0 = tick()
 		else
-			task.wait(0.7)
+			task.wait(0.4)
 		end
 	end
 
 	-- Kopyahin ang nangyari pagkatapos ng interact para makita kung ano ang task
-	if totCaptures > 0 and totActive(id) then
+	if totCaptures > 0 and totActive(id) and status ~= "nohome" then
 		local lines = {"[TrickOrTreatDebug] Pagkatapos mag-interact sa: " .. doorPrompt:GetFullName()}
 		local hasNew = false
 		for _, pr in ipairs(newPrompts) do
@@ -1054,7 +1241,7 @@ local function totFollowUp(doorPrompt, id, beforePrompts, beforeGui)
 		end
 	end
 
-	return didSomething
+	return didSomething, status
 end
 
 local function stopTrickOrTreat()
@@ -1121,8 +1308,13 @@ local function startTrickOrTreat()
 				local beforeGui = snapshotGuiTexts()
 				local done = totInteract(prompt, id)
 				if not totActive(id) then return end
-				local followed = totFollowUp(prompt, id, beforePrompts, beforeGui)
+				local followed, status = totFollowUp(prompt, id, beforePrompts, beforeGui)
 				if not totActive(id) then return end
+				if status == "nohome" then
+					totVisited[prompt] = tick() + TOT_NOHOME_COOLDOWN
+					totNotify("nohome", "Walang tao sa " .. label .. ", lilipat sa susunod", false, 3)
+					return
+				end
 				if done or followed then
 					totVisited[prompt] = tick() + TOT_COOLDOWN
 					totNotify("done", "Trick or Treat Completed: " .. label, false, 3)
