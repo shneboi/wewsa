@@ -307,7 +307,7 @@ end
 local PUMPKIN_FLY_SPEED = 100                     -- studs/sec (ibaba mo kung na-kick o na-rubberband)
 local PUMPKIN_HOVER_OFFSET = Vector3.new(0, 3, 0) -- lumilipad sa ibabaw ng pumpkin
 local PUMPKIN_ATTACK_RANGE = 12
-local PUMPKIN_SCAN_RANGE = 500
+local PUMPKIN_SCAN_RANGE = 2000
 
 local pumpkinTarget = nil
 local lastPumpkinScan = 0
@@ -392,9 +392,9 @@ local function stopPumpkinFly()
 end
 
 -- ✈️ FLY loop: lumilipad papunta sa pumpkin
-runService.Heartbeat:Connect(function(dt)
-	if not autoPumpkinEnabled then return end
+local lastNoTargetNotice = 0
 
+local function flyStep(dt)
 	local char = player.Character
 	local root = char and char:FindFirstChild("HumanoidRootPart")
 	local hum = char and char:FindFirstChildOfClass("Humanoid")
@@ -414,36 +414,50 @@ runService.Heartbeat:Connect(function(dt)
 		bv.Parent = root
 	end
 	bv.Velocity = Vector3.zero
+	root.AssemblyLinearVelocity = Vector3.zero
 
 	-- Maghanap ng target (once per second, o kapag nawala na yung dati)
 	if (not pumpkinTarget or not pumpkinTarget.Parent) or (tick() - lastPumpkinScan > 1) then
 		local found = getNearestPumpkin()
+		lastPumpkinScan = tick()
 		if found ~= pumpkinTarget then
 			pumpkinTarget = found
 			if found then
 				task.spawn(showNotification, "Target: " .. found:GetFullName():sub(-40), false)
 			end
 		end
-		lastPumpkinScan = tick()
 	end
 
-	if pumpkinTarget and pumpkinTarget.Parent then
-		local goal = pumpkinTarget.Position + PUMPKIN_HOVER_OFFSET
-		local diff = goal - root.Position
-		local dist = diff.Magnitude
-		local newPos = root.Position
-		if dist > 0.5 then
-			newPos = root.Position + diff.Unit * math.min(PUMPKIN_FLY_SPEED * dt, dist)
+	if not (pumpkinTarget and pumpkinTarget.Parent) then
+		pumpkinTarget = nil
+		if tick() - lastNoTargetNotice > 4 then
+			lastNoTargetNotice = tick()
+			task.spawn(showNotification, "Walang pumpkin na nahanap sa paligid", true)
 		end
-
-		-- Humarap sa pumpkin (iwas error kapag eksaktong nasa ibabaw)
-		local lookTarget = Vector3.new(pumpkinTarget.Position.X, newPos.Y, pumpkinTarget.Position.Z)
-		if (lookTarget - newPos).Magnitude > 0.1 then
-			root.CFrame = CFrame.lookAt(newPos, lookTarget)
-		else
-			root.CFrame = CFrame.new(newPos)
-		end
+		return
 	end
+
+	local goal = pumpkinTarget.Position + PUMPKIN_HOVER_OFFSET
+	local diff = goal - root.Position
+	local dist = diff.Magnitude
+	local newPos = root.Position
+	if dist > 0.5 then
+		newPos = root.Position + diff.Unit * math.min(PUMPKIN_FLY_SPEED * dt, dist)
+	end
+
+	-- Humarap sa pumpkin (iwas error kapag eksaktong nasa ibabaw)
+	local lookTarget = Vector3.new(pumpkinTarget.Position.X, newPos.Y, pumpkinTarget.Position.Z)
+	if (lookTarget - newPos).Magnitude > 0.1 then
+		root.CFrame = CFrame.lookAt(newPos, lookTarget)
+	else
+		root.CFrame = CFrame.new(newPos)
+	end
+end
+
+runService.Heartbeat:Connect(function(dt)
+	if not autoPumpkinEnabled then return end
+	local ok, err = pcall(flyStep, dt)
+	if not ok then warn("[PumpkinFly] " .. tostring(err)) end
 end)
 
 -- ⚔️ ATTACK loop: laging naka-equip ang melee, aatake kapag malapit na
