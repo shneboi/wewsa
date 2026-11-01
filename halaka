@@ -4,6 +4,7 @@ local userInputService = game:GetService("UserInputService")
 local runService = game:GetService("RunService")
 local replicatedStorage = game:GetService("ReplicatedStorage")
 local soundService = game:GetService("SoundService")
+local virtualUser = game:GetService("VirtualUser")
 
 local player = playersService.LocalPlayer or playersService.PlayerAdded:Wait()
 local playerGui = player:WaitForChild("PlayerGui", 15)
@@ -301,7 +302,15 @@ local function showNotification(message, isError)
 	notif:Destroy()
 end
 
--- ========== 🎃 AUTO PUMPKIN HUNT LOGIC ==========
+-- ========== 🎃 AUTO PUMPKIN HUNT (FLY + ATTACK) ==========
+local PUMPKIN_FLY_SPEED = 100                     -- studs/sec (ibaba mo kung na-kick o na-rubberband)
+local PUMPKIN_HOVER_OFFSET = Vector3.new(0, 3, 0) -- lumilipad sa ibabaw ng pumpkin
+local PUMPKIN_ATTACK_RANGE = 12
+local PUMPKIN_SCAN_RANGE = 500
+
+local pumpkinTarget = nil
+local lastPumpkinScan = 0
+
 local function equipMelee()
 	local char = player.Character
 	if not char then return end
@@ -329,23 +338,27 @@ end
 
 local function getNearestPumpkin()
 	local char = player.Character
-	if not char then return nil end
-	local root = char:FindFirstChild("HumanoidRootPart")
+	local root = char and char:FindFirstChild("HumanoidRootPart")
 	if not root then return nil end
-	
-	local closestTarget = nil
-	local closestDist = 200 -- Range ng paghahanap
-	
+
+	local closestTarget, closestDist = nil, PUMPKIN_SCAN_RANGE
+
 	for _, obj in ipairs(workspace:GetDescendants()) do
 		if obj:IsA("Model") or obj:IsA("BasePart") then
 			local name = string.lower(obj.Name)
 			if string.find(name, "pumpkin") or string.find(name, "jack") then
-				local part = obj:IsA("BasePart") and obj or (obj:IsA("Model") and (obj.PrimaryPart or obj:FindFirstChildWhichIsA("BasePart")))
-				if part then
-					local dist = (part.Position - root.Position).Magnitude
-					if dist < closestDist then
-						closestDist = dist
-						closestTarget = part
+				-- Huwag isama ang mga character ng players/NPC accessories
+				local model = obj:FindFirstAncestorOfClass("Model")
+				local isPlayerStuff = model and playersService:GetPlayerFromCharacter(model)
+				if not isPlayerStuff and not obj:IsDescendantOf(char) then
+					local part = obj:IsA("BasePart") and obj
+						or (obj.PrimaryPart or obj:FindFirstChildWhichIsA("BasePart", true))
+					if part then
+						local dist = (part.Position - root.Position).Magnitude
+						if dist < closestDist then
+							closestDist = dist
+							closestTarget = part
+						end
 					end
 				end
 			end
@@ -354,37 +367,83 @@ local function getNearestPumpkin()
 	return closestTarget
 end
 
+local function stopPumpkinFly()
+	pumpkinTarget = nil
+	local char = player.Character
+	local root = char and char:FindFirstChild("HumanoidRootPart")
+	local bv = root and root:FindFirstChild("PumpkinFly")
+	if bv then bv:Destroy() end
+end
+
+-- ✈️ FLY loop: lumilipad papunta sa pumpkin
+runService.Heartbeat:Connect(function(dt)
+	if not autoPumpkinEnabled then return end
+
+	local char = player.Character
+	local root = char and char:FindFirstChild("HumanoidRootPart")
+	local hum = char and char:FindFirstChildOfClass("Humanoid")
+	if not root or not hum or hum.Health <= 0 then return end
+
+	-- Noclip para hindi tumama sa pader habang lumilipad
+	for _, p in ipairs(char:GetDescendants()) do
+		if p:IsA("BasePart") then p.CanCollide = false end
+	end
+
+	-- Panatilihing nakalutang (walang gravity pull)
+	local bv = root:FindFirstChild("PumpkinFly")
+	if not bv then
+		bv = Instance.new("BodyVelocity")
+		bv.Name = "PumpkinFly"
+		bv.MaxForce = Vector3.new(1e6, 1e6, 1e6)
+		bv.Parent = root
+	end
+	bv.Velocity = Vector3.zero
+
+	-- Maghanap ng target (once per second, o kapag nawala na yung dati)
+	if (not pumpkinTarget or not pumpkinTarget.Parent) or (tick() - lastPumpkinScan > 1) then
+		pumpkinTarget = getNearestPumpkin()
+		lastPumpkinScan = tick()
+	end
+
+	if pumpkinTarget and pumpkinTarget.Parent then
+		local goal = pumpkinTarget.Position + PUMPKIN_HOVER_OFFSET
+		local diff = goal - root.Position
+		local dist = diff.Magnitude
+		local newPos = root.Position
+		if dist > 0.5 then
+			newPos = root.Position + diff.Unit * math.min(PUMPKIN_FLY_SPEED * dt, dist)
+		end
+
+		-- Humarap sa pumpkin (iwas error kapag eksaktong nasa ibabaw)
+		local lookTarget = Vector3.new(pumpkinTarget.Position.X, newPos.Y, pumpkinTarget.Position.Z)
+		if (lookTarget - newPos).Magnitude > 0.1 then
+			root.CFrame = CFrame.lookAt(newPos, lookTarget)
+		else
+			root.CFrame = CFrame.new(newPos)
+		end
+	end
+end)
+
+-- ⚔️ ATTACK loop: aatake kapag malapit na
 task.spawn(function()
 	while true do
 		if autoPumpkinEnabled then
 			pcall(function()
-				local tool = equipMelee()
-				local target = getNearestPumpkin()
 				local char = player.Character
-				
-				if target and char then
-					local root = char:FindFirstChild("HumanoidRootPart")
-					local hum = char:FindFirstChildOfClass("Humanoid")
-					if root and hum then
-						-- Lapitan ang target kung malayo
-						if (target.Position - root.Position).Magnitude > 8 then
-							hum:MoveTo(target.Position)
-						else
-							-- Atakihin ang target
-							if tool then
-								tool:Activate()
-							end
-						end
-					end
-				else
-					-- Kung walang target, mag-attack pa rin kapag may hawak na melee
-					if tool then
-						tool:Activate()
+				local root = char and char:FindFirstChild("HumanoidRootPart")
+				if root and pumpkinTarget and pumpkinTarget.Parent then
+					local dist = (pumpkinTarget.Position - root.Position).Magnitude
+					if dist <= PUMPKIN_ATTACK_RANGE then
+						local tool = equipMelee()
+						if tool then tool:Activate() end
+						virtualUser:Button1Down(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
+						task.wait(0.05)
+						virtualUser:Button1Up(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
 					end
 				end
 			end)
 		end
-		task.wait(0.3)
+		task.wait(0.15)
 	end
 end)
 
@@ -922,6 +981,8 @@ function showMainUI()
 		autoPumpkinEnabled = enabled
 		if enabled then
 			equipMelee()
+		else
+			stopPumpkinFly()
 		end
 	end)
 	
@@ -1266,6 +1327,8 @@ function showMainUI()
 	
 	exitBtn.MouseButton1Click:Connect(function()
 		playUISound("rbxassetid://6895079853", 0.9, 0.4)
+		autoPumpkinEnabled = false
+		stopPumpkinFly()
 		tweenService:Create(mainFrame, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
 			Size = UDim2.new(0, 0, 0, 0),
 			Position = UDim2.new(0.5, 0, 0.5, 0)
