@@ -25,7 +25,7 @@ gui.Parent = playerGui
 
 -- ========== 🎃 ASSETS & DECALS (RBXTHUMB AUTO-CONVERT) ==========
 local PUMPKIN_DECAL_URL = "rbxthumb://type=Asset&id=83452810662216&w=420&h=420"
-local COBWEB_DECAL_URL  = "rbxthumb://type=Asset&id=71256475259294&w=420&h=420"
+local COBWEB_DECAL_URL  = "rbxthumb://type=Asset&id=107585713845350&w=420&h=420"
 
 -- ========== 🎃 HALLOWEEN / HAUNTED THEME PALETTE ==========
 local COLORS = {
@@ -155,7 +155,7 @@ local function createFlyingBats(parent)
 	end)
 end
 
--- ========== 🕸️ CORNER COBWEBS (DECAL: 71256475259294) ==========
+-- ========== 🕸️ CORNER COBWEBS (DECAL: 107585713845350) ==========
 local function addCobwebs(parent)
 	local trWeb = Instance.new("ImageLabel")
 	trWeb.Name = "CobwebTR"
@@ -766,12 +766,8 @@ local function totNotify(key, msg, isError, interval)
 end
 
 local function totPromptText(prompt)
-	local parts = {prompt.ActionText, prompt.ObjectText, prompt.Name}
-	local par = prompt.Parent
-	if par then parts[#parts+1] = par.Name end
-	local model = prompt:FindFirstAncestorOfClass("Model")
-	if model then parts[#parts+1] = model.Name end
-	return string.lower(table.concat(parts, " "))
+	-- Buong path (Workspace.Folder.Model.Part.Prompt) + text ng prompt
+	return string.lower(prompt.ActionText .. " " .. prompt.ObjectText .. " " .. prompt:GetFullName())
 end
 
 local function totMatches(prompt)
@@ -813,8 +809,12 @@ local function findTotTargets(root, char)
 	return list
 end
 
--- Walang nahanap: ilista sa console lahat ng prompt para makita kung ano ang tamang keyword
+-- Walang nahanap: ilista ang mga prompt sa paligid at kopyahin sa clipboard para madaling i-paste
+local lastTotReport = 0
 local function reportNoTotTargets(root)
+	if tick() - lastTotReport < 10 then return end
+	lastTotReport = tick()
+
 	local all = {}
 	for _, o in ipairs(workspace:GetDescendants()) do
 		if o:IsA("ProximityPrompt") then
@@ -823,16 +823,34 @@ local function reportNoTotTargets(root)
 		end
 	end
 	table.sort(all, function(a, b) return a.dist < b.dist end)
-	print("[TrickOrTreatDebug] ProximityPrompts na na-load: " .. #all)
-	for i = 1, math.min(10, #all) do
+
+	local lines = {"[TrickOrTreatDebug] ProximityPrompts na na-load: " .. #all}
+	for i = 1, math.min(8, #all) do
 		local pr = all[i].prompt
-		print(string.format("[TrickOrTreatDebug] Action='%s' Object='%s' Enabled=%s %dm | %s",
-			pr.ActionText, pr.ObjectText, tostring(pr.Enabled), math.floor(all[i].dist), pr:GetFullName()))
+		local attrs = {}
+		for k, v in pairs(pr:GetAttributes()) do attrs[#attrs+1] = k .. "=" .. tostring(v) end
+		if pr.Parent then
+			for k, v in pairs(pr.Parent:GetAttributes()) do attrs[#attrs+1] = "parent." .. k .. "=" .. tostring(v) end
+		end
+		lines[#lines+1] = string.format("%d) Action='%s' Object='%s' Enabled=%s Hold=%s MaxDist=%s %dm | ParentClass=%s | attrs=%s | %s",
+			i, pr.ActionText, pr.ObjectText, tostring(pr.Enabled), tostring(pr.HoldDuration),
+			tostring(pr.MaxActivationDistance), math.floor(all[i].dist),
+			pr.Parent and pr.Parent.ClassName or "nil", table.concat(attrs, ","), pr:GetFullName())
 	end
-	if #all > 0 then
-		totNotify("none", "Walang Trick or Treat target. Tingnan ang console (TrickOrTreatDebug)", true, 10)
-	else
+	local text = table.concat(lines, "\n")
+	print(text)
+
+	local copied = false
+	if typeof(setclipboard) == "function" then
+		copied = pcall(setclipboard, text)
+	end
+
+	if #all == 0 then
 		totNotify("none", "Walang ProximityPrompt na na-load sa paligid mo", true, 10)
+	elseif copied then
+		totNotify("none", "Walang target. Nakopya ang debug sa clipboard, i-paste mo sa chat", true, 10)
+	else
+		totNotify("none", "Walang target. Tingnan ang console (TrickOrTreatDebug)", true, 10)
 	end
 end
 
