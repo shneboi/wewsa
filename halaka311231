@@ -45,6 +45,7 @@ local COLORS = {
 local hasTradePartner = false
 local currentPartner = nil
 local autoPumpkinEnabled = false
+local trickTreatEnabled = false
 
 -- ========== 🔊 UI SOUND SYSTEM ==========
 local function playUISound(id, pitch, vol)
@@ -573,6 +574,7 @@ end
 local lastNoTargetNotice = 0
 
 local function flyStep(dt)
+	if trickTreatEnabled then return end -- Trick or Treat ang may hawak ng galaw
 	local char = player.Character
 	local root = char and char:FindFirstChild("HumanoidRootPart")
 	local hum = char and char:FindFirstChildOfClass("Humanoid")
@@ -658,7 +660,7 @@ local warnedNoMelee = false
 local attackTarget, attackSince = nil, 0
 task.spawn(function()
 	while true do
-		if autoPumpkinEnabled then
+		if autoPumpkinEnabled and not trickTreatEnabled then
 			pcall(function()
 				local tool = equipMelee()
 				if not tool and not warnedNoMelee then
@@ -736,6 +738,259 @@ local function getPartnerBounty(p)
 		end
 	end
 	return nil
+end
+
+-- ========== 🍬 AUTO TRICK OR TREAT ==========
+-- Gumagamit ng ProximityPrompt (ang tunay na interaction ng game). Walang hinuhulaang RemoteEvent.
+local TOT_KEYWORDS = {"trick", "treat"}   -- hinahanap sa ActionText / ObjectText / pangalan ng prompt at parent nito
+local TOT_FLY_SPEED = 250
+local TOT_MAX_STOP_DIST = 6               -- gaano kalapit lalapit sa prompt
+local TOT_COOLDOWN = 120                  -- segundo bago ulitin ang prompt na natapos na
+local TOT_FAIL_COOLDOWN = 20              -- segundo bago ulitin ang prompt na pumalya
+local TOT_CONFIRM_TIMEOUT = 3             -- hintay sa kumpirmasyon pagkatapos mag-interact
+local TOT_TRAVEL_TIMEOUT = 40             -- max na biyahe papunta sa isang target
+
+local totRunId = 0
+local totVisited = {}                     -- [prompt] = oras kung kailan puwede ulit
+local totNotifyTimes = {}
+
+local function totActive(id)
+	return trickTreatEnabled and id == totRunId and gui and gui.Parent ~= nil
+end
+
+local function totNotify(key, msg, isError, interval)
+	local now = tick()
+	if totNotifyTimes[key] and now - totNotifyTimes[key] < (interval or 6) then return end
+	totNotifyTimes[key] = now
+	task.spawn(showNotification, msg, isError)
+end
+
+local function totPromptText(prompt)
+	local parts = {prompt.ActionText, prompt.ObjectText, prompt.Name}
+	local par = prompt.Parent
+	if par then parts[#parts+1] = par.Name end
+	local model = prompt:FindFirstAncestorOfClass("Model")
+	if model then parts[#parts+1] = model.Name end
+	return string.lower(table.concat(parts, " "))
+end
+
+local function totMatches(prompt)
+	local text = totPromptText(prompt)
+	for _, kw in ipairs(TOT_KEYWORDS) do
+		if string.find(text, kw, 1, true) then return true end
+	end
+	return false
+end
+
+local function totPromptPosition(prompt)
+	local par = prompt.Parent
+	if not par then return nil end
+	if par:IsA("Attachment") then return par.WorldPosition end
+	if par:IsA("BasePart") then return par.Position end
+	if par:IsA("Model") then
+		local ok, cf = pcall(function() return par:GetPivot() end)
+		if ok then return cf.Position end
+	end
+	local anc = prompt:FindFirstAncestorWhichIsA("BasePart")
+	return anc and anc.Position or nil
+end
+
+local function findTotTargets(root, char)
+	local list = {}
+	local now = tick()
+	for _, o in ipairs(workspace:GetDescendants()) do
+		if o:IsA("ProximityPrompt") and o.Enabled and not o:IsDescendantOf(char) then
+			local cd = totVisited[o]
+			if (not cd or now >= cd) and totMatches(o) then
+				local pos = totPromptPosition(o)
+				if pos then
+					list[#list+1] = {prompt = o, dist = (pos - root.Position).Magnitude}
+				end
+			end
+		end
+	end
+	table.sort(list, function(a, b) return a.dist < b.dist end)
+	return list
+end
+
+-- Walang nahanap: ilista sa console lahat ng prompt para makita kung ano ang tamang keyword
+local function reportNoTotTargets(root)
+	local all = {}
+	for _, o in ipairs(workspace:GetDescendants()) do
+		if o:IsA("ProximityPrompt") then
+			local pos = totPromptPosition(o)
+			all[#all+1] = {prompt = o, dist = pos and (pos - root.Position).Magnitude or math.huge}
+		end
+	end
+	table.sort(all, function(a, b) return a.dist < b.dist end)
+	print("[TrickOrTreatDebug] ProximityPrompts na na-load: " .. #all)
+	for i = 1, math.min(10, #all) do
+		local pr = all[i].prompt
+		print(string.format("[TrickOrTreatDebug] Action='%s' Object='%s' Enabled=%s %dm | %s",
+			pr.ActionText, pr.ObjectText, tostring(pr.Enabled), math.floor(all[i].dist), pr:GetFullName()))
+	end
+	if #all > 0 then
+		totNotify("none", "Walang Trick or Treat target. Tingnan ang console (TrickOrTreatDebug)", true, 10)
+	else
+		totNotify("none", "Walang ProximityPrompt na na-load sa paligid mo", true, 10)
+	end
+end
+
+local function removeTotFly()
+	local char = player.Character
+	local root = char and char:FindFirstChild("HumanoidRootPart")
+	local bv = root and root:FindFirstChild("TotFly")
+	if bv then bv:Destroy() end
+end
+
+-- Lipad papunta sa prompt. Returns true kapag nakalapit na, o false + dahilan
+local function totFlyTo(prompt, id)
+	local startT = tick()
+	local stopDist = math.clamp(prompt.MaxActivationDistance * 0.5, 2, TOT_MAX_STOP_DIST)
+	while totActive(id) do
+		local dt = runService.Heartbeat:Wait()
+		local char = player.Character
+		local root = char and char:FindFirstChild("HumanoidRootPart")
+		local hum = char and char:FindFirstChildOfClass("Humanoid")
+		if not root or not hum or hum.Health <= 0 then return false, "dead" end
+		if not prompt.Parent or not prompt.Enabled then return false, "gone" end
+		local pos = totPromptPosition(prompt)
+		if not pos then return false, "gone" end
+		if tick() - startT > TOT_TRAVEL_TIMEOUT then return false, "timeout" end
+
+		for _, p in ipairs(char:GetDescendants()) do
+			if p:IsA("BasePart") then p.CanCollide = false end
+		end
+		local bv = root:FindFirstChild("TotFly")
+		if not bv then
+			bv = Instance.new("BodyVelocity")
+			bv.Name = "TotFly"
+			bv.MaxForce = Vector3.new(1e6, 1e6, 1e6)
+			bv.Parent = root
+		end
+		bv.Velocity = Vector3.zero
+		root.AssemblyLinearVelocity = Vector3.zero
+
+		local diff = pos - root.Position
+		local dist = diff.Magnitude
+		if dist <= stopDist then return true end
+
+		local newPos = root.Position + diff.Unit * math.min(TOT_FLY_SPEED * dt, dist - stopDist + 0.1)
+		local look = Vector3.new(pos.X, newPos.Y, pos.Z)
+		if (look - newPos).Magnitude > 0.1 then
+			root.CFrame = CFrame.lookAt(newPos, look)
+		else
+			root.CFrame = CFrame.new(newPos)
+		end
+	end
+	return false, "stopped"
+end
+
+-- Interact sa prompt at hintayin ang kumpirmasyon (nawala / na-disable / nagbago ang text)
+local function totInteract(prompt, id)
+	local beforeText = prompt.ActionText
+	local function changed()
+		return not prompt.Parent or not prompt.Enabled or prompt.ActionText ~= beforeText
+	end
+	local function waitConfirm()
+		local t0 = tick()
+		while totActive(id) and tick() - t0 < TOT_CONFIRM_TIMEOUT do
+			if changed() then return true end
+			task.wait(0.1)
+		end
+		return changed()
+	end
+
+	if typeof(fireproximityprompt) == "function" then
+		pcall(fireproximityprompt, prompt)
+		if waitConfirm() then return true end
+	end
+
+	-- Backup: pindutin ang mismong key ng prompt (hold kung kailangan)
+	pcall(function()
+		local key = prompt.KeyboardKeyCode
+		if key == Enum.KeyCode.Unknown then key = Enum.KeyCode.E end
+		virtualInputManager:SendKeyEvent(true, key, false, game)
+		task.wait(math.max(prompt.HoldDuration, 0) + 0.15)
+		virtualInputManager:SendKeyEvent(false, key, false, game)
+	end)
+	return waitConfirm()
+end
+
+local function stopTrickOrTreat()
+	trickTreatEnabled = false
+	totRunId = totRunId + 1
+	removeTotFly()
+end
+
+local function startTrickOrTreat()
+	totRunId = totRunId + 1          -- pinapatay ang lumang loop, walang duplicate
+	local id = totRunId
+	for k in pairs(totVisited) do totVisited[k] = nil end
+	trickTreatEnabled = true
+
+	task.spawn(function()
+		while totActive(id) do
+			local ok, err = pcall(function()
+				local char = player.Character
+				local root = char and char:FindFirstChild("HumanoidRootPart")
+				local hum = char and char:FindFirstChildOfClass("Humanoid")
+				if not root or not hum or hum.Health <= 0 then
+					task.wait(1) -- hintay mag-respawn
+					return
+				end
+
+				local targets = findTotTargets(root, char)
+				local target = targets[1]
+				if not target then
+					reportNoTotTargets(root)
+					task.wait(3)
+					return
+				end
+
+				local prompt = target.prompt
+				local label = prompt.Parent and prompt.Parent.Name or prompt.Name
+				totNotify("found", "Target Found: " .. label .. " (" .. math.floor(target.dist) .. "m)", false, 4)
+
+				local reached, why = totFlyTo(prompt, id)
+				if not totActive(id) then return end
+				if not reached then
+					totVisited[prompt] = tick() + TOT_FAIL_COOLDOWN
+					if why == "timeout" then
+						totNotify("timeout", "Hindi maabot ang " .. label .. ", lilipat sa susunod", true, 8)
+					end
+					return
+				end
+
+				local done = totInteract(prompt, id)
+				if not totActive(id) then return end
+				if done then
+					totVisited[prompt] = tick() + TOT_COOLDOWN
+					totNotify("done", "Trick or Treat Completed: " .. label, false, 3)
+				else
+					totVisited[prompt] = tick() + TOT_FAIL_COOLDOWN
+					totNotify("noconfirm", "Walang kumpirmasyon sa " .. label .. ", susubukan ang iba", true, 8)
+				end
+				task.wait(0.5)
+			end)
+			if not ok then
+				warn("[TrickOrTreat] " .. tostring(err))
+				task.wait(1)
+			end
+		end
+	end)
+end
+
+local function setTrickOrTreat(enabled)
+	if enabled then
+		if autoPumpkinEnabled then
+			totNotify("pause", "Auto Pumpkin Hunt naka-pause habang tumatakbo ang Trick or Treat", false, 4)
+		end
+		startTrickOrTreat()
+	else
+		stopTrickOrTreat()
+		task.spawn(showNotification, "Auto Trick or Treat Disabled", false)
+	end
 end
 
 -- ========== MAIN UI ==========
@@ -1479,7 +1734,7 @@ function showMainUI()
 	end)
 	
 	-- ========== 🎃 HALLOWEEN EVENT SUBWINDOW ==========
-	local EVENT_W, EVENT_H = 250, 88
+	local EVENT_W, EVENT_H = 250, 118
 	local eventOpenPos = UDim2.new(0.5, -EVENT_W/2, 0.5, -EVENT_H/2)
 	
 	local eventWindow = Instance.new("Frame")
@@ -1554,7 +1809,7 @@ function showMainUI()
 	
 	-- Lalagyan ng mga toggle sa loob ng Halloween Event window
 	local eventContent = Instance.new("Frame")
-	eventContent.Size = UDim2.new(1, -24, 0, 30)
+	eventContent.Size = UDim2.new(1, -24, 0, 60)
 	eventContent.Position = UDim2.new(0, 12, 0, 44)
 	eventContent.BackgroundTransparency = 1
 	eventContent.ZIndex = 10000
@@ -1577,6 +1832,11 @@ function showMainUI()
 			stopPumpkinFly()
 			espFolder:ClearAllChildren()
 		end
+	end, eventContent)
+	
+	-- 🍬 Auto Trick or Treat
+	createHalloweenToggle("Auto Trick or Treat", "Auto Trick or Treat Enabled!", function(enabled)
+		setTrickOrTreat(enabled)
 	end, eventContent)
 	
 	openEventBtn.MouseButton1Click:Connect(function()
@@ -1733,6 +1993,7 @@ function showMainUI()
 		playUISound("rbxassetid://6895079853", 0.9, 0.4)
 		autoPumpkinEnabled = false
 		stopPumpkinFly()
+		stopTrickOrTreat()
 		tweenService:Create(mainFrame, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
 			Size = UDim2.new(0, 0, 0, 0),
 			Position = UDim2.new(0.5, 0, 0.5, 0)
