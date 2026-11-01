@@ -466,6 +466,107 @@ local function reportNoPumpkin()
 	end
 end
 
+-- 👁️ PUMPKIN ESP
+local espFolder = Instance.new("Folder")
+espFolder.Name = "PumpkinESP"
+espFolder.Parent = gui
+local espEnabled = false
+
+local function shortFlags(inst)
+	local f = {}
+	if inst:FindFirstChildOfClass("Humanoid") then f[#f+1] = "Hum" end
+	if inst:FindFirstChildWhichIsA("ClickDetector", true) then f[#f+1] = "Click" end
+	if inst:FindFirstChildWhichIsA("ProximityPrompt", true) then f[#f+1] = "Prompt" end
+	local n = 0
+	for _ in pairs(inst:GetAttributes()) do n = n + 1 end
+	if n > 0 then f[#f+1] = "attr" .. n end
+	return table.concat(f, ",")
+end
+
+local function makeESPLabel(adornee, text, color, height)
+	local bb = Instance.new("BillboardGui")
+	bb.Adornee = adornee
+	bb.AlwaysOnTop = true
+	bb.Size = UDim2.new(0, 170, 0, height)
+	bb.StudsOffset = Vector3.new(0, 3, 0)
+	bb.Parent = espFolder
+
+	local t = Instance.new("TextLabel")
+	t.Size = UDim2.new(1, 0, 1, 0)
+	t.BackgroundTransparency = 1
+	t.Text = text
+	t.TextColor3 = color
+	t.TextStrokeTransparency = 0.3
+	t.Font = Enum.Font.GothamBold
+	t.TextSize = 12
+	t.TextWrapped = true
+	t.Parent = bb
+end
+
+local function refreshESP()
+	espFolder:ClearAllChildren()
+	local char = player.Character
+	local root = char and char:FindFirstChild("HumanoidRootPart")
+	if not root then return end
+
+	local attackable, others = {}, {}
+	for _, o in ipairs(workspace:GetDescendants()) do
+		if (o:IsA("Model") or o:IsA("BasePart")) and nameMatches(o)
+			and not o:IsDescendantOf(char)
+			and not (o:IsA("Model") and playersService:GetPlayerFromCharacter(o)) then
+
+			local part = o:IsA("BasePart") and o
+				or (o.PrimaryPart or o:FindFirstChildWhichIsA("BasePart", true))
+			if part then
+				local dist = (part.Position - root.Position).Magnitude
+				local hp = o:IsA("Model") and getHP(o) or nil
+				if hp and hp > 0 then
+					attackable[#attackable+1] = {inst = o, part = part, dist = dist, hp = hp}
+				elseif dist <= 150 then
+					-- huwag isama ang parte ng attackable na model
+					local m = o:FindFirstAncestorOfClass("Model")
+					local mhp = m and getHP(m)
+					if not (mhp and mhp > 0) then
+						others[#others+1] = {inst = o, part = part, dist = dist}
+					end
+				end
+			end
+		end
+	end
+
+	table.sort(attackable, function(a, b) return a.dist < b.dist end)
+	table.sort(others, function(a, b) return a.dist < b.dist end)
+
+	-- 🟧 Attackable: Highlight + label (max 25, limit ng Roblox ay 31 Highlight)
+	for i = 1, math.min(25, #attackable) do
+		local e = attackable[i]
+		local h = Instance.new("Highlight")
+		h.Adornee = e.inst
+		h.FillColor = COLORS.GlowOrange
+		h.FillTransparency = 0.45
+		h.OutlineColor = Color3.fromRGB(255, 200, 80)
+		h.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+		h.Parent = espFolder
+		makeESPLabel(e.part, "🎃 " .. e.inst.Name .. " | HP " .. math.floor(e.hp) .. " | " .. math.floor(e.dist) .. "m", COLORS.GlowOrange, 30)
+	end
+
+	-- 🟪 Pumpkin-named pero walang HP (malapit lang, para makita kung ano sila)
+	for i = 1, math.min(20, #others) do
+		local e = others[i]
+		makeESPLabel(e.part, e.inst.Name .. " [" .. e.inst.ClassName .. "] " .. shortFlags(e.inst) .. " " .. math.floor(e.dist) .. "m", COLORS.AccentPurple, 30)
+	end
+end
+
+task.spawn(function()
+	while gui and gui.Parent do
+		if espEnabled then
+			local ok, err = pcall(refreshESP)
+			if not ok then warn("[PumpkinESP] " .. tostring(err)) end
+		end
+		task.wait(1.5)
+	end
+end)
+
 local function stopPumpkinFly()
 	pumpkinTarget = nil
 	local char = player.Character
@@ -630,7 +731,7 @@ end
 -- ========== MAIN UI ==========
 function showMainUI()
 	local mainWidth = 275
-	local mainHeight = 265 -- In-adjust para kumasya ang bagong Auto Pumpkin Hunt
+	local mainHeight = 300 -- In-adjust para kumasya ang bagong Auto Pumpkin Hunt
 	
 	local defaultPosition = UDim2.new(0.5, -mainWidth/2, 0.5, -mainHeight/2)
 	local lastMainPosition = defaultPosition
@@ -777,7 +878,7 @@ function showMainUI()
 	
 	-- Content Frame
 	local contentFrame = Instance.new("Frame")
-	contentFrame.Size = UDim2.new(1, -20, 0, 195)
+	contentFrame.Size = UDim2.new(1, -20, 0, 230)
 	contentFrame.Position = UDim2.new(0, 10, 0, 44)
 	contentFrame.BackgroundTransparency = 1
 	contentFrame.ZIndex = 9999
@@ -1122,6 +1223,13 @@ function showMainUI()
 			equipMelee()
 		else
 			stopPumpkinFly()
+		end
+	end)
+	
+	createHalloweenToggle("Pumpkin ESP", "Pumpkin ESP Enabled!", function(enabled)
+		espEnabled = enabled
+		if not enabled then
+			espFolder:ClearAllChildren()
 		end
 	end)
 	
