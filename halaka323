@@ -749,6 +749,8 @@ local TOT_MAX_STOP_DIST = 6               -- gaano kalapit lalapit sa prompt
 local TOT_COOLDOWN = 120                  -- segundo bago ulitin ang prompt na natapos na
 local TOT_FAIL_COOLDOWN = 20              -- segundo bago ulitin ang prompt na pumalya
 local TOT_CONFIRM_TIMEOUT = 3             -- hintay sa kumpirmasyon pagkatapos mag-interact
+local TOT_FOLLOWUP_WAIT = 6              -- hintay sa kasunod na task pagkatapos ng interact sa pinto
+local totCaptures = 0                    -- ilang beses pang kokopyahin ang nangyari pagkatapos ng interact
 local TOT_TRAVEL_TIMEOUT = 40             -- max na biyahe papunta sa isang target
 
 local totRunId = 0
@@ -947,6 +949,110 @@ local function totInteract(prompt, id)
 	return waitConfirm()
 end
 
+-- ===== Kasunod na task pagkatapos ng interact sa pinto =====
+local function totGuiVisible(o)
+	local par = o.Parent
+	while par and par ~= playerGui do
+		if par:IsA("GuiObject") and not par.Visible then return false end
+		if par:IsA("ScreenGui") and not par.Enabled then return false end
+		par = par.Parent
+	end
+	return o.Visible
+end
+
+local function snapshotGuiTexts()
+	local set = {}
+	for _, o in ipairs(playerGui:GetDescendants()) do
+		if (o:IsA("TextLabel") or o:IsA("TextButton")) and o.Text ~= ""
+			and not o:IsDescendantOf(gui) and totGuiVisible(o) then
+			set[o] = o.Text
+		end
+	end
+	return set
+end
+
+local function snapshotNearbyPrompts(pos, radius)
+	local set = {}
+	for _, o in ipairs(workspace:GetDescendants()) do
+		if o:IsA("ProximityPrompt") and o.Enabled then
+			local pp = totPromptPosition(o)
+			if pp and (pp - pos).Magnitude <= radius then set[o] = true end
+		end
+	end
+	return set
+end
+
+-- Binabantayan ang lumalabas na bagong prompt/GUI matapos mag-interact sa pinto at ginagawa ang bagong prompt.
+-- Returns true kung may bagong prompt na na-interact.
+local function totFollowUp(doorPrompt, id, beforePrompts, beforeGui)
+	local handled = {}
+	local newPrompts = {}
+	local didSomething = false
+	local t0 = tick()
+
+	while totActive(id) and tick() - t0 < TOT_FOLLOWUP_WAIT do
+		local char = player.Character
+		local root = char and char:FindFirstChild("HumanoidRootPart")
+		if not root then break end
+
+		local found
+		for pr in pairs(snapshotNearbyPrompts(root.Position, 40)) do
+			if pr ~= doorPrompt and not beforePrompts[pr] and not handled[pr] then
+				found = pr
+				break
+			end
+		end
+
+		if found then
+			handled[found] = true
+			newPrompts[#newPrompts+1] = found
+			local label = found.ActionText ~= "" and found.ActionText or found.Name
+			totNotify("followup", "May bagong task: " .. label, false, 2)
+			local reached = totFlyTo(found, id)
+			if reached and totActive(id) then
+				totInteract(found, id)
+				didSomething = true
+			end
+			t0 = tick() -- dagdagan ang hintay, baka may kasunod pa
+		else
+			task.wait(0.7)
+		end
+	end
+
+	-- Kopyahin ang nangyari pagkatapos ng interact para makita kung ano ang task
+	if totCaptures > 0 and totActive(id) then
+		local lines = {"[TrickOrTreatDebug] Pagkatapos mag-interact sa: " .. doorPrompt:GetFullName()}
+		local hasNew = false
+		for _, pr in ipairs(newPrompts) do
+			hasNew = true
+			lines[#lines+1] = string.format("NEW PROMPT Action='%s' Object='%s' Hold=%s | %s",
+				pr.ActionText, pr.ObjectText, tostring(pr.HoldDuration), pr:GetFullName())
+		end
+		local afterGui = snapshotGuiTexts()
+		local n = 0
+		for o, txt in pairs(afterGui) do
+			if beforeGui[o] == nil then
+				n = n + 1
+				if n <= 20 then
+					hasNew = true
+					lines[#lines+1] = string.format("NEW GUI [%s] '%s' | %s", o.ClassName, txt, o:GetFullName())
+				end
+			end
+		end
+		if hasNew then
+			totCaptures = totCaptures - 1
+			local text = table.concat(lines, "\n")
+			print(text)
+			if typeof(setclipboard) == "function" then
+				pcall(setclipboard, text)
+				totNotify("capture", "Nakopya ang nangyari pagkatapos ng interact. I-paste mo sa chat", false, 5)
+			end
+		end
+	end
+
+	return didSomething
+end
+
 local function stopTrickOrTreat()
 	trickTreatEnabled = false
 	totRunId = totRunId + 1
@@ -957,6 +1063,7 @@ local function startTrickOrTreat()
 	totRunId = totRunId + 1          -- pinapatay ang lumang loop, walang duplicate
 	local id = totRunId
 	for k in pairs(totVisited) do totVisited[k] = nil end
+	totCaptures = 3
 	trickTreatEnabled = true
 
 	task.spawn(function()
@@ -992,9 +1099,13 @@ local function startTrickOrTreat()
 					return
 				end
 
+				local beforePrompts = snapshotNearbyPrompts(root.Position, 40)
+				local beforeGui = snapshotGuiTexts()
 				local done = totInteract(prompt, id)
 				if not totActive(id) then return end
-				if done then
+				local followed = totFollowUp(prompt, id, beforePrompts, beforeGui)
+				if not totActive(id) then return end
+				if done or followed then
 					totVisited[prompt] = tick() + TOT_COOLDOWN
 					totNotify("done", "Trick or Treat Completed: " .. label, false, 3)
 				else
