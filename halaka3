@@ -5,6 +5,7 @@ local runService = game:GetService("RunService")
 local replicatedStorage = game:GetService("ReplicatedStorage")
 local soundService = game:GetService("SoundService")
 local virtualUser = game:GetService("VirtualUser")
+local virtualInputManager = game:GetService("VirtualInputManager")
 
 local player = playersService.LocalPlayer or playersService.PlayerAdded:Wait()
 local playerGui = player:WaitForChild("PlayerGui", 15)
@@ -311,29 +312,44 @@ local PUMPKIN_SCAN_RANGE = 500
 local pumpkinTarget = nil
 local lastPumpkinScan = 0
 
+local function isMeleeTool(tool)
+	return tool:IsA("Tool") and tool.ToolTip == "Melee"
+end
+
+local function isOtherTool(tool)
+	-- fallback: kahit anong tool na hindi Fruit/Sword/Gun
+	return tool:IsA("Tool") and tool.ToolTip ~= "Blox Fruit" and tool.ToolTip ~= "Sword"
+		and tool.ToolTip ~= "Gun" and not tool.Name:find("Fruit")
+end
+
 local function equipMelee()
 	local char = player.Character
-	if not char then return end
-	local hum = char:FindFirstChildOfClass("Humanoid")
-	if not hum then return end
-	
-	-- Tignan kung may hawak nang tool
-	local equippedTool = char:FindFirstChildOfClass("Tool")
-	if equippedTool and (equippedTool.ToolTip == "Melee" or equippedTool:FindFirstChild("Melee") or not equippedTool.Name:find("Fruit")) then
-		return equippedTool
+	local hum = char and char:FindFirstChildOfClass("Humanoid")
+	if not hum or hum.Health <= 0 then return nil end
+
+	-- Kung may naka-equip nang melee, yun na
+	for _, t in ipairs(char:GetChildren()) do
+		if isMeleeTool(t) then return t end
 	end
-	
-	-- Maghanap sa Backpack ng Melee tool
-	local backpack = player:FindFirstChild("Backpack")
+
+	local backpack = player:FindFirstChildOfClass("Backpack")
 	if backpack then
-		for _, tool in ipairs(backpack:GetChildren()) do
-			if tool:IsA("Tool") and (tool.ToolTip == "Melee" or tool:FindFirstChild("Melee") or not tool.Name:find("Fruit")) then
-				hum:EquipTool(tool)
-				return tool
+		-- Unahin ang tunay na Melee
+		for _, t in ipairs(backpack:GetChildren()) do
+			if isMeleeTool(t) then
+				hum:EquipTool(t)
+				return t
+			end
+		end
+		-- Fallback
+		for _, t in ipairs(backpack:GetChildren()) do
+			if isOtherTool(t) then
+				hum:EquipTool(t)
+				return t
 			end
 		end
 	end
-	return equippedTool
+	return nil
 end
 
 local function getNearestPumpkin()
@@ -401,7 +417,13 @@ runService.Heartbeat:Connect(function(dt)
 
 	-- Maghanap ng target (once per second, o kapag nawala na yung dati)
 	if (not pumpkinTarget or not pumpkinTarget.Parent) or (tick() - lastPumpkinScan > 1) then
-		pumpkinTarget = getNearestPumpkin()
+		local found = getNearestPumpkin()
+		if found ~= pumpkinTarget then
+			pumpkinTarget = found
+			if found then
+				task.spawn(showNotification, "Target: " .. found:GetFullName():sub(-40), false)
+			end
+		end
 		lastPumpkinScan = tick()
 	end
 
@@ -424,26 +446,44 @@ runService.Heartbeat:Connect(function(dt)
 	end
 end)
 
--- ⚔️ ATTACK loop: aatake kapag malapit na
+-- ⚔️ ATTACK loop: laging naka-equip ang melee, aatake kapag malapit na
+local function clickAttack()
+	local cam = workspace.CurrentCamera
+	local size = cam.ViewportSize
+	local x, y = size.X / 2, size.Y / 2
+	-- Totoong input event (ito ang nade-detect ng game)
+	virtualInputManager:SendMouseButtonEvent(x, y, 0, true, game, 0)
+	task.wait(0.03)
+	virtualInputManager:SendMouseButtonEvent(x, y, 0, false, game, 0)
+	-- Backup
+	virtualUser:Button1Down(Vector2.new(x, y), cam.CFrame)
+	task.wait(0.02)
+	virtualUser:Button1Up(Vector2.new(x, y), cam.CFrame)
+end
+
+local warnedNoMelee = false
 task.spawn(function()
 	while true do
 		if autoPumpkinEnabled then
 			pcall(function()
+				local tool = equipMelee()
+				if not tool and not warnedNoMelee then
+					warnedNoMelee = true
+					task.spawn(showNotification, "Walang Melee na nakita sa Backpack!", true)
+				end
+
 				local char = player.Character
 				local root = char and char:FindFirstChild("HumanoidRootPart")
-				if root and pumpkinTarget and pumpkinTarget.Parent then
+				if tool and root and pumpkinTarget and pumpkinTarget.Parent then
 					local dist = (pumpkinTarget.Position - root.Position).Magnitude
 					if dist <= PUMPKIN_ATTACK_RANGE then
-						local tool = equipMelee()
-						if tool then tool:Activate() end
-						virtualUser:Button1Down(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
-						task.wait(0.05)
-						virtualUser:Button1Up(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
+						tool:Activate()
+						clickAttack()
 					end
 				end
 			end)
 		end
-		task.wait(0.15)
+		task.wait(0.12)
 	end
 end)
 
@@ -979,6 +1019,7 @@ function showMainUI()
 	-- ========== 🎃 AUTO PUMPKIN HUNT ROW (SA ILALIM NG FRUIT SPAWNER) ==========
 	createHalloweenToggle("Auto Pumpkin Hunt", "Auto Pumpkin Hunt Activated!", function(enabled)
 		autoPumpkinEnabled = enabled
+		warnedNoMelee = false
 		if enabled then
 			equipMelee()
 		else
