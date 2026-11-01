@@ -742,6 +742,7 @@ end
 
 -- ========== 🍬 AUTO TRICK OR TREAT ==========
 -- Gumagamit ng ProximityPrompt (ang tunay na interaction ng game). Walang hinuhulaang RemoteEvent.
+local TOT_FALLBACK_KEYWORDS = {"door"}  -- pangalawang pagpipilian: mga pinto (mas mababa ang priority)
 local TOT_KEYWORDS = {"trick", "treat"}   -- hinahanap sa ActionText / ObjectText / pangalan ng prompt at parent nito
 local TOT_FLY_SPEED = 250
 local TOT_MAX_STOP_DIST = 6               -- gaano kalapit lalapit sa prompt
@@ -770,12 +771,16 @@ local function totPromptText(prompt)
 	return string.lower(prompt.ActionText .. " " .. prompt.ObjectText .. " " .. prompt:GetFullName())
 end
 
+-- 1 = "trick/treat" ang nasa pangalan/path, 2 = pinto lang, nil = hindi kasama
 local function totMatches(prompt)
 	local text = totPromptText(prompt)
 	for _, kw in ipairs(TOT_KEYWORDS) do
-		if string.find(text, kw, 1, true) then return true end
+		if string.find(text, kw, 1, true) then return 1 end
 	end
-	return false
+	for _, kw in ipairs(TOT_FALLBACK_KEYWORDS) do
+		if string.find(text, kw, 1, true) then return 2 end
+	end
+	return nil
 end
 
 local function totPromptPosition(prompt)
@@ -797,15 +802,22 @@ local function findTotTargets(root, char)
 	for _, o in ipairs(workspace:GetDescendants()) do
 		if o:IsA("ProximityPrompt") and o.Enabled and not o:IsDescendantOf(char) then
 			local cd = totVisited[o]
-			if (not cd or now >= cd) and totMatches(o) then
-				local pos = totPromptPosition(o)
-				if pos then
-					list[#list+1] = {prompt = o, dist = (pos - root.Position).Magnitude}
+			if not cd or now >= cd then
+				local pri = totMatches(o)
+				if pri then
+					local pos = totPromptPosition(o)
+					if pos then
+						list[#list+1] = {prompt = o, dist = (pos - root.Position).Magnitude, pri = pri}
+					end
 				end
 			end
 		end
 	end
-	table.sort(list, function(a, b) return a.dist < b.dist end)
+	-- Unahin ang trick/treat, tapos ang pinakamalapit
+	table.sort(list, function(a, b)
+		if a.pri ~= b.pri then return a.pri < b.pri end
+		return a.dist < b.dist
+	end)
 	return list
 end
 
