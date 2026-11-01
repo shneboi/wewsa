@@ -547,9 +547,7 @@ local function refreshESP()
 		h.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
 		h.Parent = espFolder
 
-		local hpText = e.hp and ("HP " .. math.floor(e.hp)) or "no HP"
-		local tag = e.skipped and " (SKIPPED)" or ""
-		makeESPLabel(e.part, "🎃 " .. e.inst.Name .. " | " .. hpText .. " | " .. math.floor(e.dist) .. "m" .. tag, color, 30)
+		makeESPLabel(e.part, "🎃 " .. e.inst.Name .. " | " .. math.floor(e.dist) .. "m", color, 30)
 	end
 end
 
@@ -1481,7 +1479,7 @@ function showMainUI()
 	end)
 	
 	-- ========== 🎃 HALLOWEEN EVENT SUBWINDOW ==========
-	local EVENT_W, EVENT_H = 250, 118
+	local EVENT_W, EVENT_H = 250, 88
 	local eventOpenPos = UDim2.new(0.5, -EVENT_W/2, 0.5, -EVENT_H/2)
 	
 	local eventWindow = Instance.new("Frame")
@@ -1556,7 +1554,7 @@ function showMainUI()
 	
 	-- Lalagyan ng mga toggle sa loob ng Halloween Event window
 	local eventContent = Instance.new("Frame")
-	eventContent.Size = UDim2.new(1, -24, 0, 60)
+	eventContent.Size = UDim2.new(1, -24, 0, 30)
 	eventContent.Position = UDim2.new(0, 12, 0, 44)
 	eventContent.BackgroundTransparency = 1
 	eventContent.ZIndex = 10000
@@ -1568,21 +1566,15 @@ function showMainUI()
 	eventLayout.Parent = eventContent
 	
 	-- 🎃 Auto Pumpkin Hunt
-	createHalloweenToggle("Auto Pumpkin Hunt", "Auto Pumpkin Hunt Activated!", function(enabled)
+	createHalloweenToggle("Auto Pumpkin Hunt", "Auto Pumpkin Hunt + ESP Activated!", function(enabled)
 		autoPumpkinEnabled = enabled
+		espEnabled = enabled -- kasama na ang ESP
 		warnedNoMelee = false
 		table.clear(pumpkinBlacklist)
 		if enabled then
 			equipMelee()
 		else
 			stopPumpkinFly()
-		end
-	end, eventContent)
-	
-	-- 👁️ Pumpkin ESP
-	createHalloweenToggle("Pumpkin ESP", "Pumpkin ESP Enabled!", function(enabled)
-		espEnabled = enabled
-		if not enabled then
 			espFolder:ClearAllChildren()
 		end
 	end, eventContent)
