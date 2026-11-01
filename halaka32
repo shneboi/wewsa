@@ -352,6 +352,19 @@ local function equipMelee()
 	return nil
 end
 
+-- Attackable lang: kailangan may Humanoid (may HP) at buhay pa
+local function isTargetAlive(part)
+	if not part or not part.Parent then return false end
+	local model = part:FindFirstAncestorOfClass("Model")
+	local h = model and model:FindFirstChildOfClass("Humanoid")
+	return h ~= nil and h.Health > 0
+end
+
+local function nameMatches(inst)
+	local n = string.lower(inst.Name)
+	return string.find(n, "pumpkin") ~= nil or string.find(n, "jack") ~= nil
+end
+
 local function getNearestPumpkin()
 	local char = player.Character
 	local root = char and char:FindFirstChild("HumanoidRootPart")
@@ -359,16 +372,23 @@ local function getNearestPumpkin()
 
 	local closestTarget, closestDist = nil, PUMPKIN_SCAN_RANGE
 
-	for _, obj in ipairs(workspace:GetDescendants()) do
-		if obj:IsA("Model") or obj:IsA("BasePart") then
-			local name = string.lower(obj.Name)
-			if string.find(name, "pumpkin") or string.find(name, "jack") then
-				-- Huwag isama ang mga character ng players/NPC accessories
-				local model = obj:FindFirstAncestorOfClass("Model")
-				local isPlayerStuff = model and playersService:GetPlayerFromCharacter(model)
-				if not isPlayerStuff and not obj:IsDescendantOf(char) then
-					local part = obj:IsA("BasePart") and obj
-						or (obj.PrimaryPart or obj:FindFirstChildWhichIsA("BasePart", true))
+	for _, hum in ipairs(workspace:GetDescendants()) do
+		if hum:IsA("Humanoid") and hum.Health > 0 then
+			local model = hum.Parent
+			if model and model:IsA("Model")
+				and model ~= char
+				and not playersService:GetPlayerFromCharacter(model) then
+
+				-- pangalan ng model o ng parent/folder niya ay may "pumpkin"/"jack"
+				local matched = nameMatches(model)
+				if not matched and model.Parent and model.Parent ~= workspace then
+					matched = nameMatches(model.Parent)
+				end
+
+				if matched then
+					local part = model:FindFirstChild("HumanoidRootPart")
+						or model.PrimaryPart
+						or model:FindFirstChildWhichIsA("BasePart", true)
 					if part then
 						local dist = (part.Position - root.Position).Magnitude
 						if dist < closestDist then
@@ -417,7 +437,7 @@ local function flyStep(dt)
 	root.AssemblyLinearVelocity = Vector3.zero
 
 	-- Maghanap ng target (once per second, o kapag nawala na yung dati)
-	if (not pumpkinTarget or not pumpkinTarget.Parent) or (tick() - lastPumpkinScan > 1) then
+	if not isTargetAlive(pumpkinTarget) and (tick() - lastPumpkinScan > 0.3) then
 		local found = getNearestPumpkin()
 		lastPumpkinScan = tick()
 		if found ~= pumpkinTarget then
@@ -428,7 +448,7 @@ local function flyStep(dt)
 		end
 	end
 
-	if not (pumpkinTarget and pumpkinTarget.Parent) then
+	if not isTargetAlive(pumpkinTarget) then
 		pumpkinTarget = nil
 		if tick() - lastNoTargetNotice > 4 then
 			lastNoTargetNotice = tick()
@@ -488,7 +508,7 @@ task.spawn(function()
 
 				local char = player.Character
 				local root = char and char:FindFirstChild("HumanoidRootPart")
-				if tool and root and pumpkinTarget and pumpkinTarget.Parent then
+				if tool and root and isTargetAlive(pumpkinTarget) then
 					local dist = (pumpkinTarget.Position - root.Position).Magnitude
 					if dist <= PUMPKIN_ATTACK_RANGE then
 						tool:Activate()
