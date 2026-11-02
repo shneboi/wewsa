@@ -26,7 +26,7 @@ gui.Parent = playerGui
 
 -- ========== 🎃 ASSETS & DECALS (RBXTHUMB AUTO-CONVERT) ==========
 local PUMPKIN_DECAL_URL = "rbxthumb://type=Asset&id=83452810662216&w=420&h=420"
-local COBWEB_DECAL_URL  = "rbxthumb://type=Asset&id=107585713845350&w=420&h=420"
+local COBWEB_DECAL_URL  = "rbxthumb://type=Asset&id=71256475259294&w=420&h=420"
 
 -- ========== 🎃 HALLOWEEN / HAUNTED THEME PALETTE ==========
 local COLORS = {
@@ -156,7 +156,7 @@ local function createFlyingBats(parent)
 	end)
 end
 
--- ========== 🕸️ CORNER COBWEBS (DECAL: 107585713845350) ==========
+-- ========== 🕸️ CORNER COBWEBS (DECAL: 71256475259294) ==========
 local function addCobwebs(parent)
 	local trWeb = Instance.new("ImageLabel")
 	trWeb.Name = "CobwebTR"
